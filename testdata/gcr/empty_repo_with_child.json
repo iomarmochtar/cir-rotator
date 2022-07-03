@@ -1,0 +1,9 @@
+{
+  "child": [
+    "cronjob-image",
+    "job-script"
+  ],
+  "manifest": {},
+  "name": "parent/repo/sub_repo",
+  "tags": []
+}

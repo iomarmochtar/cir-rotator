@@ -1,0 +1,24 @@
+{
+  "child": [
+    "sub1"
+  ],
+  "manifest": {
+    "sha256:02123554c8d65d241a77dd8e238403ba8cc697afca7208bbe7564b634aa22fee": {
+      "imageSizeBytes": "365557176",
+      "layerId": "",
+      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+      "tag": [
+        "latest",
+        "release-20210624-150000"
+      ],
+      "timeCreatedMs": "1624518709150",
+      "timeUploadedMs": "1624518770462"
+    }
+  },
+  "name": "parent",
+  "tags": [
+    "release-20210722-140200",
+    "release-20210624-150000",
+    "latest"
+  ]
+}

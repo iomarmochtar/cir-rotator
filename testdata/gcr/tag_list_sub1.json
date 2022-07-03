@@ -1,0 +1,21 @@
+{
+  "child": [],
+  "manifest": {
+    "sha256:C05ce64163cd2327d364933df75aa4850af425b6cbaec2f6af3b31e5246be0e2": {
+      "imageSizeBytes": "530325786",
+      "layerId": "",
+      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+      "tag": [
+        "latest",
+        "abc"
+      ],
+      "timeCreatedMs": "1585800237411",
+      "timeUploadedMs": "1585800278141"
+    }
+  },
+  "name": "parent/sub1",
+  "tags": [
+    "latest",
+    "abc"
+  ]
+}

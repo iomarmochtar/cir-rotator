@@ -1,0 +1,63 @@
+{
+  "child": [],
+  "manifest": {
+    "sha256:005ce64163cd2327d364933df75aa4850af425b6cbaec2f6af3b31e5246be0e2": {
+      "imageSizeBytes": "530325786",
+      "layerId": "",
+      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+      "tag": [
+        "cec4a9d287db145235edcc7f765a150fbaa06202"
+      ],
+      "timeCreatedMs": "1585800237411",
+      "timeUploadedMs": "1585800278141"
+    },
+    "sha256:00ac9df37ff356753cd20f4475d4b8d3a543b4d45db2390c0275be2ee7a09b2e": {
+      "imageSizeBytes": "488118834",
+      "layerId": "",
+      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+      "tag": [
+        "3ba6bc5168abafc3d62b02ae8827e92c42120fcd"
+      ],
+      "timeCreatedMs": "1602233483150",
+      "timeUploadedMs": "1602233562581"
+    },
+    "sha256:00cd159840e5059bb16fb49923ae92d4dfdf2da42781a8f10f6bc2bb3408b104": {
+      "imageSizeBytes": "519466055",
+      "layerId": "",
+      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+      "tag": [
+        "7722521337718d0d7085b76ee3d3e3f348b11ad3"
+      ],
+      "timeCreatedMs": "1584504770312",
+      "timeUploadedMs": "1584504815857"
+    },
+    "sha256:01551c49819f8bda0a8bdc6216e5793404b0adb4937d407e99a590c0c5cb8078": {
+      "imageSizeBytes": "365914267",
+      "layerId": "",
+      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+      "tag": [
+        "release-20210722-140200"
+      ],
+      "timeCreatedMs": "1626938469408",
+      "timeUploadedMs": "1626938534153"
+    },
+    "sha256:02123554c8d65d241a77dd8e238403ba8cc697afca7208bbe7564b634aa22fee": {
+      "imageSizeBytes": "365557176",
+      "layerId": "",
+      "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+      "tag": [
+        "release-20210624-150000"
+      ],
+      "timeCreatedMs": "1624518709150",
+      "timeUploadedMs": "1624518770462"
+    }
+  },
+  "name": "parent/repo",
+  "tags": [
+        "cec4a9d287db145235edcc7f765a150fbaa06202",
+        "3ba6bc5168abafc3d62b02ae8827e92c42120fcd",
+        "7722521337718d0d7085b76ee3d3e3f348b11ad3",
+        "release-20210722-140200",
+        "release-20210624-150000"
+  ]
+}
