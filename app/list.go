@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/iomarmochtar/cir-rotator/pkg/config"
+	"github.com/iomarmochtar/cir-rotator/app/config"
 	"github.com/iomarmochtar/cir-rotator/pkg/registry"
 	u "github.com/iomarmochtar/cir-rotator/pkg/usecases"
 	"github.com/rs/zerolog/log"

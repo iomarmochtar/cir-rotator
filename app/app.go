@@ -13,7 +13,7 @@ import (
 	"github.com/rs/zerolog/pkgerrors"
 	"github.com/urfave/cli/v2"
 
-	c "github.com/iomarmochtar/cir-rotator/pkg/config"
+	c "github.com/iomarmochtar/cir-rotator/app/config"
 	"github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	reg "github.com/iomarmochtar/cir-rotator/pkg/registry"
 	"github.com/jedib0t/go-pretty/table"
