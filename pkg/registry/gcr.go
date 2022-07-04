@@ -90,12 +90,12 @@ func (g *GCR) tagList(repository string) (err error) {
 			return errors.Wrap(err, "while converting image size")
 		}
 
-		timeCreated, err := h.ConvertTimeStrToUnix(gdigest.TimeCreatedMs, h.UnitMilliSecond)
+		timeCreated, err := h.ConvertTimeStrToUnix(gdigest.TimeCreatedMs)
 		if err != nil {
 			return errors.Wrap(err, "while parse created time")
 		}
 
-		timeUploaded, err := h.ConvertTimeStrToUnix(gdigest.TimeUploadedMs, h.UnitMilliSecond)
+		timeUploaded, err := h.ConvertTimeStrToUnix(gdigest.TimeUploadedMs)
 		if err != nil {
 			return errors.Wrap(err, "while parse uploaded time")
 		}
