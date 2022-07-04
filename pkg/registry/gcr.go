@@ -75,7 +75,6 @@ func (g *GCR) tagList(repository string) (err error) {
 			if err = g.tagList(nextRepo); err != nil {
 				return err
 			}
-
 		}
 	}
 	// ignore if it's doesn't has any manifest attached
@@ -83,10 +82,10 @@ func (g *GCR) tagList(repository string) (err error) {
 		return nil
 	}
 
+	//nolint:prealloc
 	var digest []Digest
 	for name, gdigest := range jsonBody.Manifest {
 		sizeByte, err := strconv.ParseUint(gdigest.ImageSizeBytes, 10, 32)
-		//sizeByte, err := strconv.Atoi(gdigest.ImageSizeBytes)
 		if err != nil {
 			return errors.Wrap(err, "while converting image size")
 		}
@@ -118,19 +117,19 @@ func (g *GCR) tagList(repository string) (err error) {
 
 func (g GCR) Delete(repository Repository, isDryRun bool) (err error) {
 	shortRepoName := strings.TrimPrefix(repository.Name, fmt.Sprintf("%s/", g.host))
-	manifestUrl := fmt.Sprintf("https://%s/v2/%s/manifests", g.host, shortRepoName)
+	manifestURL := fmt.Sprintf("https://%s/v2/%s/manifests", g.host, shortRepoName)
 	for idr := range repository.Digests {
 		digest := repository.Digests[idr]
 		// delete the related tags
 		for idt := range digest.Tag {
-			tagUrl := fmt.Sprintf("%s/%s", manifestUrl, digest.Tag[idt])
-			if err = deleteImage(g.hc, tagUrl, isDryRun); err != nil {
+			tagURL := fmt.Sprintf("%s/%s", manifestURL, digest.Tag[idt])
+			if err = deleteImage(g.hc, tagURL, isDryRun); err != nil {
 				return err
 			}
 		}
 
-		digestUrl := fmt.Sprintf("%s/%s", manifestUrl, digest.Name)
-		if err = deleteImage(g.hc, digestUrl, isDryRun); err != nil {
+		digestURL := fmt.Sprintf("%s/%s", manifestURL, digest.Name)
+		if err = deleteImage(g.hc, digestURL, isDryRun); err != nil {
 			return err
 		}
 	}

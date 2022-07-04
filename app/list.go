@@ -9,7 +9,6 @@ import (
 )
 
 func doList(c config.IConfig) ([]registry.Repository, error) {
-
 	repositories, err := u.ListRepositories(c.ImageRegistry(), c.IncludeEngine(), c.ExcludeEngine())
 	if err != nil {
 		return nil, err
@@ -19,12 +18,12 @@ func doList(c config.IConfig) ([]registry.Repository, error) {
 		printTable(repositories)
 	}
 
-	if outputJson := c.OutputJsonPath(); outputJson != "" {
-		if err = dumpToJson(repositories, outputJson); err != nil {
+	if outputJSON := c.OutputJSONPath(); outputJSON != "" {
+		if err = dumpToJSON(repositories, outputJSON); err != nil {
 			return nil, err
 		}
 
-		log.Info().Msgf("json output result written to %s", outputJson)
+		log.Info().Msgf("json output result written to %s", outputJSON)
 	}
 
 	return repositories, nil

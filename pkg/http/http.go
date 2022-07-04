@@ -21,7 +21,7 @@ type Option struct {
 	Token *oauth2.Token
 }
 
-type HTTPClient struct {
+type Client struct {
 	req *req.Request
 }
 
@@ -36,10 +36,10 @@ func New(o Option) (IHttpClient, error) {
 	}
 
 	request.Headers.Set("Content-Type", "application/json")
-	return &HTTPClient{req: request}, nil
+	return &Client{req: request}, nil
 }
 
-func (h HTTPClient) GetMarshalReturnObj(url string, obj any) error {
+func (h Client) GetMarshalReturnObj(url string, obj any) error {
 	response, err := h.req.Get(url)
 	if err != nil {
 		return err
@@ -52,7 +52,7 @@ func (h HTTPClient) GetMarshalReturnObj(url string, obj any) error {
 	return nil
 }
 
-func (h HTTPClient) DeleteMarshalReturnObj(url string, obj any) error {
+func (h Client) DeleteMarshalReturnObj(url string, obj any) error {
 	response, err := h.req.Delete(url)
 	if err != nil {
 		return err

@@ -81,7 +81,7 @@ func initConfig(ctx *cli.Context) (c.IConfig, error) {
 	cfg := &c.Config{
 		Debug:              ctx.Bool("debug"),
 		OutputTable:        ctx.Bool("output-table"),
-		OutputJson:         ctx.String("output-json"),
+		OutputJSON:         ctx.String("output-json"),
 		RegUsername:        ctx.String("basic-auth-user"),
 		RegPassword:        ctx.String("basic-auth-pwd"),
 		ServiceAccountPath: ctx.String("service-account"),
@@ -125,13 +125,13 @@ func printTable(repositories []reg.Repository) {
 	t.Render()
 }
 
-func dumpToJson(repositories []reg.Repository, jsonPath string) error {
+func dumpToJSON(repositories []reg.Repository, jsonPath string) error {
 	data, err := json.Marshal(repositories)
 	if err != nil {
 		return err
 	}
 
-	if err = ioutil.WriteFile(jsonPath, data, 0755); err != nil {
+	if err = ioutil.WriteFile(jsonPath, data, 0600); err != nil {
 		return err
 	}
 	return nil

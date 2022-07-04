@@ -21,6 +21,7 @@ func ListRepositories(r reg.ImageRegistry, includeFilter, excludeFilter fl.IFilt
 
 // filterRepositories filter listing repositories and digest based in include and exclude filters
 func doFilter(repositories []reg.Repository, includeFilter, excludeFilter fl.IFilterEngine) ([]reg.Repository, error) {
+	//nolint:prealloc
 	var result []reg.Repository
 
 	for idr := range repositories {

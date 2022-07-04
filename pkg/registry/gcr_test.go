@@ -20,7 +20,7 @@ import (
 
 var (
 	gcrHost      = "asia.gcr.io"
-	gcrHostHttps = fmt.Sprintf("https://%s", gcrHost)
+	gcrHostHTTPS = fmt.Sprintf("https://%s", gcrHost)
 )
 
 func readFixture(loc string) []byte {
@@ -76,25 +76,25 @@ func TestNewGCR(t *testing.T) {
 func TestGCR_Catalog(t *testing.T) {
 	parentRepo := "parent"
 	hostWithParentRepo := hl.SlashJoin(gcrHost, parentRepo)
-	parentTagListUrl := hl.SlashJoin(gcrHostHttps, "v2", parentRepo, "tags", "list")
+	parentTagListURL := hl.SlashJoin(gcrHostHTTPS, "v2", parentRepo, "tags", "list")
 	paretRepoResp := readGCRResponseFixture[reg.GCRTagsResponse]("tag_list_parent.json")
 	sub1RepoResp := readGCRResponseFixture[reg.GCRTagsResponse]("tag_list_sub1.json")
 
 	testCases := map[string]struct {
-		mockHttpClient     func(*mh.MockIHttpClient)
+		mockHTTPClient     func(*mh.MockIHttpClient)
 		expectErrMsg       string
 		expectRepositories []reg.Repository
 	}{
 		"error while get tags from parent repository": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				m.EXPECT().GetMarshalReturnObj(parentTagListUrl, gomock.Any()).Times(1).Return(fmt.Errorf("an error while fetching catalog"))
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				m.EXPECT().GetMarshalReturnObj(parentTagListURL, gomock.Any()).Times(1).Return(fmt.Errorf("an error while fetching catalog"))
 			},
 			expectErrMsg:       "an error while fetching catalog",
 			expectRepositories: nil,
 		},
 		"error in response body": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				m.EXPECT().GetMarshalReturnObj(parentTagListUrl, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				m.EXPECT().GetMarshalReturnObj(parentTagListURL, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
 					jbody.Errors = []reg.ErrorField{
 						{
 							Code:    "UNKNOWN",
@@ -108,22 +108,22 @@ func TestGCR_Catalog(t *testing.T) {
 			expectRepositories: nil,
 		},
 		"got an error while access child repo": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
 				childRepo := "child1"
-				m.EXPECT().GetMarshalReturnObj(parentTagListUrl, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
+				m.EXPECT().GetMarshalReturnObj(parentTagListURL, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
 					jbody.Child = []string{childRepo}
 					return nil
 				})
 
-				childUrl := hl.SlashJoin(gcrHostHttps, "v2", parentRepo, childRepo, "tags", "list")
-				m.EXPECT().GetMarshalReturnObj(childUrl, gomock.Any()).Times(1).Return(fmt.Errorf("an error in accessing child repo"))
+				childURL := hl.SlashJoin(gcrHostHTTPS, "v2", parentRepo, childRepo, "tags", "list")
+				m.EXPECT().GetMarshalReturnObj(childURL, gomock.Any()).Times(1).Return(fmt.Errorf("an error in accessing child repo"))
 			},
 			expectRepositories: nil,
 			expectErrMsg:       "an error in accessing child repo",
 		},
 		"got invalid created timestamp": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				m.EXPECT().GetMarshalReturnObj(parentTagListUrl, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				m.EXPECT().GetMarshalReturnObj(parentTagListURL, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
 					*jbody = readGCRResponseFixture[reg.GCRTagsResponse]("tag_list_parent_invalid_created_time.json")
 					*jbody = readGCRResponseFixture[reg.GCRTagsResponse]("tag_list_parent_invalid_created_time.json")
 					return nil
@@ -133,8 +133,8 @@ func TestGCR_Catalog(t *testing.T) {
 			expectErrMsg:       `while parse created time: strconv.ParseInt: parsing "": invalid syntax`,
 		},
 		"got invalid uploaded timestamp": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				m.EXPECT().GetMarshalReturnObj(parentTagListUrl, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				m.EXPECT().GetMarshalReturnObj(parentTagListURL, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
 					*jbody = readGCRResponseFixture[reg.GCRTagsResponse]("tag_list_parent_invalid_uploaded_time.json")
 					return nil
 				})
@@ -143,8 +143,8 @@ func TestGCR_Catalog(t *testing.T) {
 			expectErrMsg:       `while parse uploaded time: strconv.ParseInt: parsing "": invalid syntax`,
 		},
 		"invalid image size byte": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				m.EXPECT().GetMarshalReturnObj(parentTagListUrl, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				m.EXPECT().GetMarshalReturnObj(parentTagListURL, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
 					*jbody = readGCRResponseFixture[reg.GCRTagsResponse]("tag_list_parent_invalid_byte_size.json")
 					return nil
 				})
@@ -153,30 +153,30 @@ func TestGCR_Catalog(t *testing.T) {
 			expectErrMsg:       `while converting image size: strconv.ParseUint: parsing "abc": invalid syntax`,
 		},
 		"recursively access child url that has digest information if any": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
 				childRepo1 := "sub1"
 				childRepo2 := "sub2"
-				m.EXPECT().GetMarshalReturnObj(parentTagListUrl, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
+				m.EXPECT().GetMarshalReturnObj(parentTagListURL, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
 					*jbody = paretRepoResp
 					jbody.Child = []string{childRepo1, childRepo2}
 					return nil
 				})
 
-				childUrl := hl.SlashJoin(gcrHostHttps, "v2", parentRepo, childRepo1, "tags", "list")
-				m.EXPECT().GetMarshalReturnObj(childUrl, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
+				childURL := hl.SlashJoin(gcrHostHTTPS, "v2", parentRepo, childRepo1, "tags", "list")
+				m.EXPECT().GetMarshalReturnObj(childURL, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
 					*jbody = sub1RepoResp
 					return nil
 				})
 
 				// no digest but has several child
-				childUrl2 := hl.SlashJoin(gcrHostHttps, "v2", parentRepo, childRepo2)
-				m.EXPECT().GetMarshalReturnObj(hl.SlashJoin(childUrl2, "tags", "list"), gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
+				childURL2 := hl.SlashJoin(gcrHostHTTPS, "v2", parentRepo, childRepo2)
+				m.EXPECT().GetMarshalReturnObj(hl.SlashJoin(childURL2, "tags", "list"), gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
 					*jbody = readGCRResponseFixture[reg.GCRTagsResponse]("empty_repo_with_child.json")
 					return nil
 				})
 
-				m.EXPECT().GetMarshalReturnObj(hl.SlashJoin(childUrl2, "cronjob-image", "tags", "list"), gomock.Any()).Times(1).Return(nil)
-				m.EXPECT().GetMarshalReturnObj(hl.SlashJoin(childUrl2, "job-script", "tags", "list"), gomock.Any()).Times(1).Return(nil)
+				m.EXPECT().GetMarshalReturnObj(hl.SlashJoin(childURL2, "cronjob-image", "tags", "list"), gomock.Any()).Times(1).Return(nil)
+				m.EXPECT().GetMarshalReturnObj(hl.SlashJoin(childURL2, "job-script", "tags", "list"), gomock.Any()).Times(1).Return(nil)
 			},
 			expectRepositories: []reg.Repository{
 				{
@@ -206,16 +206,16 @@ func TestGCR_Catalog(t *testing.T) {
 			},
 		},
 		"empty repository will not be marked as result": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				m.EXPECT().GetMarshalReturnObj(parentTagListUrl, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				m.EXPECT().GetMarshalReturnObj(parentTagListURL, gomock.Any()).Times(1).DoAndReturn(func(url string, jbody *reg.GCRTagsResponse) error {
 					*jbody = readGCRResponseFixture[reg.GCRTagsResponse]("empty_repo_with_child.json")
 					return nil
 				})
 
-				child1Url := hl.SlashJoin(gcrHostHttps, "v2", parentRepo, "cronjob-image", "tags", "list")
+				child1Url := hl.SlashJoin(gcrHostHTTPS, "v2", parentRepo, "cronjob-image", "tags", "list")
 				m.EXPECT().GetMarshalReturnObj(child1Url, gomock.Any()).Times(1).Return(nil)
 
-				child2Url := hl.SlashJoin(gcrHostHttps, "v2", parentRepo, "job-script", "tags", "list")
+				child2Url := hl.SlashJoin(gcrHostHTTPS, "v2", parentRepo, "job-script", "tags", "list")
 				m.EXPECT().GetMarshalReturnObj(child2Url, gomock.Any()).Times(1).Return(nil)
 			},
 			expectRepositories: nil,
@@ -228,12 +228,11 @@ func TestGCR_Catalog(t *testing.T) {
 			defer ctrl.Finish()
 
 			mHc := mh.NewMockIHttpClient(ctrl)
-			tc.mockHttpClient(mHc)
+			tc.mockHTTPClient(mHc)
 
 			gcr, _ := registry.NewGCR(hostWithParentRepo, mHc)
 			repositories, err := gcr.Catalog()
 
-			//assert.ElementsMatch(t, tc.expectRepositories, repositories)
 			assert.Equal(t, tc.expectRepositories, repositories)
 			if tc.expectErrMsg != "" {
 				assert.EqualError(t, err, tc.expectErrMsg)
@@ -245,7 +244,6 @@ func TestGCR_Catalog(t *testing.T) {
 }
 
 func TestGCR_Delete(t *testing.T) {
-
 	sampleRepo := reg.Repository{
 		Name: "asia.gcr.io/parent/sub1",
 		Digests: []reg.Digest{
@@ -260,49 +258,49 @@ func TestGCR_Delete(t *testing.T) {
 	}
 
 	testCases := map[string]struct {
-		mockHttpClient func(*mh.MockIHttpClient)
+		mockHTTPClient func(*mh.MockIHttpClient)
 		isDryRun       bool
 		repository     reg.Repository
 		expectErrMsg   string
 	}{
 		"will not do api call for deletion if dry run is true": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
 				m.EXPECT().DeleteMarshalReturnObj(gomock.Any(), gomock.Any()).Times(0)
 			},
 			repository: sampleRepo,
 			isDryRun:   true,
 		},
 		"will call api for deletion if dry run is false": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				manifestUrl := hl.SlashJoin(gcrHostHttps, "v2", "parent", "sub1", "manifests")
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				manifestURL := hl.SlashJoin(gcrHostHTTPS, "v2", "parent", "sub1", "manifests")
 				// expecting call in order since the tags will be deleted first before it's digest
 				gomock.InOrder(
-					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestUrl, "latest"), gomock.Any()).Times(1).Return(nil),
-					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestUrl, "abc"), gomock.Any()).Times(1).Return(nil),
-					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestUrl, "sha256:C05ce64163cd2327d364933df75aa4850af425b6cbaec2f6af3b31e5246be0e2"), gomock.Any()).Times(1).Return(nil),
+					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "latest"), gomock.Any()).Times(1).Return(nil),
+					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "abc"), gomock.Any()).Times(1).Return(nil),
+					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "sha256:C05ce64163cd2327d364933df75aa4850af425b6cbaec2f6af3b31e5246be0e2"), gomock.Any()).Times(1).Return(nil),
 				)
 			},
 			repository: sampleRepo,
 			isDryRun:   false,
 		},
 		"an error while deleting tag": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				manifestUrl := hl.SlashJoin(gcrHostHttps, "v2", "parent", "sub1", "manifests")
-				m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestUrl, "latest"), gomock.Any()).Times(1).Return(fmt.Errorf("an error while deleting tag"))
-				m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestUrl, "abc"), gomock.Any()).Times(0)
-				m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestUrl, "sha256:C05ce64163cd2327d364933df75aa4850af425b6cbaec2f6af3b31e5246be0e2"), gomock.Any()).Times(0)
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				manifestURL := hl.SlashJoin(gcrHostHTTPS, "v2", "parent", "sub1", "manifests")
+				m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "latest"), gomock.Any()).Times(1).Return(fmt.Errorf("an error while deleting tag"))
+				m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "abc"), gomock.Any()).Times(0)
+				m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "sha256:C05ce64163cd2327d364933df75aa4850af425b6cbaec2f6af3b31e5246be0e2"), gomock.Any()).Times(0)
 			},
 			repository:   sampleRepo,
 			isDryRun:     false,
 			expectErrMsg: "an error while deleting tag",
 		},
 		"an error while deleting digest": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				manifestUrl := hl.SlashJoin(gcrHostHttps, "v2", "parent", "sub1", "manifests")
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				manifestURL := hl.SlashJoin(gcrHostHTTPS, "v2", "parent", "sub1", "manifests")
 				gomock.InOrder(
-					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestUrl, "latest"), gomock.Any()).Times(1).Return(nil),
-					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestUrl, "abc"), gomock.Any()).Times(1).Return(nil),
-					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestUrl, "sha256:C05ce64163cd2327d364933df75aa4850af425b6cbaec2f6af3b31e5246be0e2"), gomock.Any()).Times(1).Return(fmt.Errorf("an error in manifest deletion")),
+					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "latest"), gomock.Any()).Times(1).Return(nil),
+					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "abc"), gomock.Any()).Times(1).Return(nil),
+					m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "sha256:C05ce64163cd2327d364933df75aa4850af425b6cbaec2f6af3b31e5246be0e2"), gomock.Any()).Times(1).Return(fmt.Errorf("an error in manifest deletion")),
 				)
 			},
 			repository:   sampleRepo,
@@ -310,9 +308,9 @@ func TestGCR_Delete(t *testing.T) {
 			expectErrMsg: "an error in manifest deletion",
 		},
 		"error from delete response": {
-			mockHttpClient: func(m *mh.MockIHttpClient) {
-				latestTagUrl := hl.SlashJoin(gcrHostHttps, "v2", "parent", "sub1", "manifests", "latest")
-				m.EXPECT().DeleteMarshalReturnObj(latestTagUrl, gomock.Any()).Times(1).DoAndReturn(func(url string, errFields *reg.ErrorsField) error {
+			mockHTTPClient: func(m *mh.MockIHttpClient) {
+				latestTagURL := hl.SlashJoin(gcrHostHTTPS, "v2", "parent", "sub1", "manifests", "latest")
+				m.EXPECT().DeleteMarshalReturnObj(latestTagURL, gomock.Any()).Times(1).DoAndReturn(func(url string, errFields *reg.ErrorsField) error {
 					*errFields = readGCRResponseFixture[reg.ErrorsField]("error_delete_manifest.json")
 					return nil
 				})
@@ -329,7 +327,7 @@ func TestGCR_Delete(t *testing.T) {
 			defer ctrl.Finish()
 
 			mHc := mh.NewMockIHttpClient(ctrl)
-			tc.mockHttpClient(mHc)
+			tc.mockHTTPClient(mHc)
 
 			gcr, err := registry.NewGCR(hl.SlashJoin(gcrHost, "parent"), mHc)
 			assert.NoError(t, err)

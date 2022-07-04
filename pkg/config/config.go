@@ -12,14 +12,14 @@ import (
 type IConfig interface {
 	IsDebug() bool
 	IsOutputTable() bool
-	OutputJsonPath() string
+	OutputJSONPath() string
 	Username() string
 	Password() string
 	Host() string
 	ImageRegistry() reg.ImageRegistry
 	ExcludeEngine() fl.IFilterEngine
 	IncludeEngine() fl.IFilterEngine
-	HttpClient() http.IHttpClient
+	HTTPClient() http.IHttpClient
 	Init() error
 }
 
@@ -32,7 +32,7 @@ type Config struct {
 	RegistryType       string
 	ExcludeFilters     []string
 	IncludeFilters     []string
-	OutputJson         string
+	OutputJSON         string
 	OutputTable        bool
 
 	excludeEngine fl.IFilterEngine
@@ -44,7 +44,7 @@ type Config struct {
 // Init is validating inputs and setups some dependencies for the application to run
 func (c *Config) Init() (err error) {
 	// http client
-	if err = c.initHttpClient(); err != nil {
+	if err = c.initHTTPClient(); err != nil {
 		return err
 	}
 
@@ -77,7 +77,7 @@ func (c Config) Host() string {
 	return c.RegistryHost
 }
 
-func (c Config) HttpClient() http.IHttpClient {
+func (c Config) HTTPClient() http.IHttpClient {
 	return c.httpClient
 }
 
@@ -93,8 +93,8 @@ func (c Config) IsOutputTable() bool {
 	return c.OutputTable
 }
 
-func (c Config) OutputJsonPath() string {
-	return c.OutputJson
+func (c Config) OutputJSONPath() string {
+	return c.OutputJSON
 }
 
 // ImageRegistry get related image registry based on known host if not mentioned
@@ -113,7 +113,7 @@ func (c *Config) initImageReg() (err error) {
 	}
 	imageRegFn := reg.RegistryMapper[regType]
 	if imageRegFn == nil {
-		return fmt.Errorf("unkown image registry type %s", regType)
+		return fmt.Errorf("unknown image registry type %s", regType)
 	}
 
 	if c.imageReg, err = imageRegFn(c.Host(), c.httpClient); err != nil {
@@ -137,7 +137,7 @@ func (c *Config) initFilters() (err error) {
 	return nil
 }
 
-func (c *Config) initHttpClient() (err error) {
+func (c *Config) initHTTPClient() (err error) {
 	// prioritizing service path setups
 	if c.ServiceAccountPath != "" {
 		tokenGenerator := reg.TokenGeneratorMapper[c.RegistryType]

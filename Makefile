@@ -6,7 +6,7 @@ COVERAGE_OUT    = coverage.txt
 .PHONY: setup-linter
 export LINTER_VERSION
 setup-linter:
-	[ ! -f ./myfile ] && curl -sfL https://raw.githubusercontent.com/bukalapak/toolkit-installer/master/golangci-lint.sh | sh
+	test ! -f ${LINTER_BIN} && curl -sfL https://raw.githubusercontent.com/bukalapak/toolkit-installer/master/golangci-lint.sh | sh || true
 
 .PHONY: lint
 lint: setup-linter

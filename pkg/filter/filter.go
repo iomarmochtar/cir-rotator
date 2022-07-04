@@ -28,7 +28,7 @@ type IFilterEngine interface {
 
 const filtersJoiner = " || "
 
-type FilterEngine struct {
+type Engine struct {
 	program *vm.Program
 }
 
@@ -50,10 +50,10 @@ func New(filters []string) (IFilterEngine, error) {
 		return nil, err
 	}
 
-	return &FilterEngine{program: program}, nil
+	return &Engine{program: program}, nil
 }
 
-func (f FilterEngine) Process(fields Fields) (result bool, err error) {
+func (f Engine) Process(fields Fields) (result bool, err error) {
 	output, err := expr.Run(f.program, fields)
 	if err != nil {
 		return false, err
