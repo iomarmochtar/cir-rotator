@@ -1,24 +1,23 @@
-package app
+package cmd
 
 import (
-	"github.com/iomarmochtar/cir-rotator/app/config"
+	"github.com/iomarmochtar/cir-rotator/app"
 	"github.com/iomarmochtar/cir-rotator/pkg/registry"
-	u "github.com/iomarmochtar/cir-rotator/pkg/usecases"
 	"github.com/rs/zerolog/log"
 	"github.com/urfave/cli/v2"
 )
 
-func doList(c config.IConfig) ([]registry.Repository, error) {
-	repositories, err := u.ListRepositories(c.ImageRegistry(), c.IncludeEngine(), c.ExcludeEngine())
+func doList(a *app.App, ctx *cli.Context) ([]registry.Repository, error) {
+	repositories, err := a.ListRepositories()
 	if err != nil {
 		return nil, err
 	}
 
-	if c.IsOutputTable() {
+	if ctx.Bool("output-table") {
 		printTable(repositories)
 	}
 
-	if outputJSON := c.OutputJSONPath(); outputJSON != "" {
+	if outputJSON := ctx.String("output-json"); outputJSON != "" {
 		if err = dumpToJSON(repositories, outputJSON); err != nil {
 			return nil, err
 		}
@@ -39,7 +38,7 @@ func ListAction() *cli.Command {
 				return err
 			}
 
-			if _, err = doList(cfg); err != nil {
+			if _, err = doList(app.New(cfg), ctx); err != nil {
 				return err
 			}
 

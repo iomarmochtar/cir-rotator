@@ -5,16 +5,16 @@ import (
 	"io/ioutil"
 
 	fl "github.com/iomarmochtar/cir-rotator/pkg/filter"
+	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	http "github.com/iomarmochtar/cir-rotator/pkg/http"
 	reg "github.com/iomarmochtar/cir-rotator/pkg/registry"
 )
 
 type IConfig interface {
-	IsDebug() bool
-	IsOutputTable() bool
-	OutputJSONPath() string
 	Username() string
 	Password() string
+	SkipList() []string
+	IsDryRun() bool
 	Host() string
 	ImageRegistry() reg.ImageRegistry
 	ExcludeEngine() fl.IFilterEngine
@@ -24,21 +24,21 @@ type IConfig interface {
 }
 
 type Config struct {
-	Debug              bool
 	RegUsername        string
 	RegPassword        string
 	ServiceAccountPath string
 	RegistryHost       string
 	RegistryType       string
+	SkipListPath       string
+	DryRun             bool
 	ExcludeFilters     []string
 	IncludeFilters     []string
-	OutputJSON         string
-	OutputTable        bool
 
 	excludeEngine fl.IFilterEngine
 	includeEngine fl.IFilterEngine
 	imageReg      reg.ImageRegistry
 	httpClient    http.IHttpClient
+	skipList      []string
 }
 
 // Init is validating inputs and setups some dependencies for the application to run
@@ -53,6 +53,11 @@ func (c *Config) Init() (err error) {
 		return err
 	}
 
+	// skip list that will be used in delete actions
+	if err = c.initSkipList(); err != nil {
+		return err
+	}
+
 	// setup filters (include & exclude)
 	if err = c.initFilters(); err != nil {
 		return err
@@ -61,8 +66,12 @@ func (c *Config) Init() (err error) {
 	return nil
 }
 
-func (c Config) IsDebug() bool {
-	return c.Debug
+func (c Config) SkipList() []string {
+	return c.skipList
+}
+
+func (c Config) IsDryRun() bool {
+	return c.DryRun
 }
 
 func (c Config) Username() string {
@@ -87,14 +96,6 @@ func (c Config) ExcludeEngine() fl.IFilterEngine {
 
 func (c Config) IncludeEngine() fl.IFilterEngine {
 	return c.includeEngine
-}
-
-func (c Config) IsOutputTable() bool {
-	return c.OutputTable
-}
-
-func (c Config) OutputJSONPath() string {
-	return c.OutputJSON
 }
 
 // ImageRegistry get related image registry based on known host if not mentioned
@@ -131,6 +132,15 @@ func (c *Config) initFilters() (err error) {
 
 	if len(c.ExcludeFilters) != 0 {
 		if c.excludeEngine, err = fl.New(c.ExcludeFilters); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Config) initSkipList() (err error) {
+	if c.SkipListPath != "" {
+		if c.skipList, err = h.ReadLines(c.SkipListPath); err != nil {
 			return err
 		}
 	}
