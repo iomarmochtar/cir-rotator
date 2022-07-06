@@ -10,6 +10,7 @@ import (
 	reg "github.com/iomarmochtar/cir-rotator/pkg/registry"
 )
 
+//go:generate mockgen -destination mock_config/mock_config.go -source config.go IConfig
 type IConfig interface {
 	Username() string
 	Password() string
