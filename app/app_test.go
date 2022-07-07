@@ -194,3 +194,54 @@ func TestApp_ListRepositories(t *testing.T) {
 		})
 	}
 }
+
+func TestApp_DeleteRepositories(t *testing.T) {
+	testCases := map[string]struct {
+		mockConfig   func(*gomock.Controller) *mc.MockIConfig
+		repositories []reg.Repository
+		expectErrMsg string
+	}{
+		"got an error while deleting image": {
+			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
+				mockReg := mr.NewMockImageRegistry(ctrl)
+				mockReg.EXPECT().Delete(sampleRepos[0], false).Times(1).Return(fmt.Errorf("failure"))
+
+				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
+				mockConfig.EXPECT().SkipList().Times(1).Return([]string{})
+				mockConfig.EXPECT().IsDryRun().Times(1).Return(false)
+				return mockConfig
+			},
+			repositories: sampleRepos,
+			expectErrMsg: "failure",
+		},
+		"found in skip list": {
+			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
+				mockReg := mr.NewMockImageRegistry(ctrl)
+				mockReg.EXPECT().Delete(sampleRepos[1], false).Times(1).Return(nil)
+
+				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
+				mockConfig.EXPECT().SkipList().Times(2).Return([]string{"image-1:latest"})
+				mockConfig.EXPECT().IsDryRun().Times(1).Return(false)
+				return mockConfig
+			},
+			repositories: sampleRepos,
+		},
+	}
+
+	for title, tc := range testCases {
+		t.Run(title, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			defer ctrl.Finish()
+
+			mockConfig := tc.mockConfig(ctrl)
+			err := app.New(mockConfig).DeleteRepositories(tc.repositories)
+			if tc.expectErrMsg != "" {
+				assert.EqualError(t, err, tc.expectErrMsg)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}

@@ -28,7 +28,7 @@ func (a App) DeleteRepositories(repositories []reg.Repository) (err error) {
 	for idr := range repositories {
 		repo := repositories[idr]
 		if image, skipped := isInSkipList(repo, a.config.SkipList()); skipped {
-			log.Debug().Str("image", image).Msg("listed in skip list, ignoring")
+			log.Info().Str("image", image).Msg("listed in skip list, ignoring")
 			continue
 		}
 		log.Info().Str("repo", repo.Name).Msg("deleting repository")
