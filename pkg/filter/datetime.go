@@ -62,19 +62,19 @@ func (datetime) Duration(s string) time.Duration {
 	}
 	return d
 }
-func (datetime) Now() time.Time                                { return time.Now() }
-func (datetime) Equal(a, b time.Time) bool                     { return a.Equal(b) }
-func (datetime) Before(a, b time.Time) bool                    { return a.Before(b) }
-func (datetime) BeforeOrEqual(a, b time.Time) bool             { return a.Before(b) || a.Equal(b) }
-func (datetime) After(a, b time.Time) bool                     { return a.After(b) }
-func (datetime) AfterOrEqual(a, b time.Time) bool              { return a.After(b) || a.Equal(b) }
-func (datetime) Add(a time.Time, b time.Duration) time.Time    { return a.Add(b) }
-func (datetime) Sub(a, b time.Time) time.Duration              { return a.Sub(b) }
-func (datetime) EqualDuration(a, b time.Duration) bool         { return a == b }
-func (datetime) BeforeDuration(a, b time.Duration) bool        { return a < b }
-func (datetime) BeforeOrEqualDuration(a, b time.Duration) bool { return a <= b }
-func (datetime) AfterDuration(a, b time.Duration) bool         { return a > b }
-func (datetime) AfterOrEqualDuration(a, b time.Duration) bool  { return a >= b }
+func (datetime) Now() time.Time                                     { return time.Now() }
+func (datetime) Equal(a, b time.Time) bool                          { return a.Equal(b) }
+func (datetime) Before(a, b time.Time) bool                         { return a.Before(b) }
+func (datetime) BeforeOrEqual(a, b time.Time) bool                  { return a.Before(b) || a.Equal(b) }
+func (datetime) After(a, b time.Time) bool                          { return a.After(b) }
+func (datetime) AfterOrEqual(a, b time.Time) bool                   { return a.After(b) || a.Equal(b) }
+func (datetime) AddTimeWDur(a time.Time, b time.Duration) time.Time { return a.Add(b) }
+func (datetime) SubTimeWTime(a, b time.Time) time.Duration          { return a.Sub(b) }
+func (datetime) EqualDuration(a, b time.Duration) bool              { return a == b }
+func (datetime) BeforeDuration(a, b time.Duration) bool             { return a < b }
+func (datetime) BeforeOrEqualDuration(a, b time.Duration) bool      { return a <= b }
+func (datetime) AfterDuration(a, b time.Duration) bool              { return a > b }
+func (datetime) AfterOrEqualDuration(a, b time.Duration) bool       { return a >= b }
 
 func datetimeOperations() []expr.Option {
 	return []expr.Option{
@@ -86,8 +86,8 @@ func datetimeOperations() []expr.Option {
 		expr.Operator(">=", "AfterOrEqual"),
 
 		// Time and duration manipulation.
-		expr.Operator("+", "Add"),
-		expr.Operator("-", "Sub"),
+		expr.Operator("+", "AddTimeWDur"),
+		expr.Operator("-", "SubTimeWTime"),
 
 		// Operators override for duration comprising.
 		expr.Operator("==", "EqualDuration"),

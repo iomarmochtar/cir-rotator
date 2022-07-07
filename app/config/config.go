@@ -44,6 +44,11 @@ type Config struct {
 
 // Init is validating inputs and setups some dependencies for the application to run
 func (c *Config) Init() (err error) {
+	// registry type
+	if err = c.initRegType(); err != nil {
+		return err
+	}
+
 	// http client
 	if err = c.initHTTPClient(); err != nil {
 		return err
@@ -105,17 +110,23 @@ func (c Config) ImageRegistry() reg.ImageRegistry {
 	return c.imageReg
 }
 
-func (c *Config) initImageReg() (err error) {
+func (c *Config) initRegType() (err error) {
+	if c.Host() == "" {
+		return fmt.Errorf("registry host is required")
+	}
 	// if registry type was not mentioned then try do determinte it by hostname
-	regType := c.RegistryType
-	if regType == "" {
-		if regType, err = reg.GetImageRegistryByHostname(c.Host()); err != nil {
+	if c.RegistryType == "" {
+		if c.RegistryType, err = reg.GetImageRegistryByHostname(c.Host()); err != nil {
 			return err
 		}
 	}
-	imageRegFn := reg.RegistryMapper[regType]
+	return nil
+}
+
+func (c *Config) initImageReg() (err error) {
+	imageRegFn := reg.RegistryMapper[c.RegistryType]
 	if imageRegFn == nil {
-		return fmt.Errorf("unknown image registry type %s", regType)
+		return fmt.Errorf("unknown image registry type %s", c.RegistryType)
 	}
 
 	if c.imageReg, err = imageRegFn(c.Host(), c.httpClient); err != nil {
