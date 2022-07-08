@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/iomarmochtar/cir-rotator/app"
 	"github.com/iomarmochtar/cir-rotator/pkg/registry"
 	"github.com/rs/zerolog/log"
@@ -42,6 +44,13 @@ func ListAction() *cli.Command {
 				return err
 			}
 
+			return nil
+		},
+		Before: func(ctx *cli.Context) error {
+			// must specified the output
+			if !ctx.Bool("output-table") && ctx.String("output-json") == "" {
+				return fmt.Errorf("must specified one or more output")
+			}
 			return nil
 		},
 	}

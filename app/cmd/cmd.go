@@ -24,7 +24,6 @@ var (
 		&cli.BoolFlag{
 			Name:  "output-table",
 			Usage: "show output as table to stdout",
-			Value: true,
 		},
 		&cli.StringFlag{
 			Name:  "output-json",
