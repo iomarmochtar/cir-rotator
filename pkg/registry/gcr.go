@@ -105,8 +105,7 @@ func (g *GCR) tagList(repository string) (err error) {
 		}
 
 		digest = append(digest, Digest{
-			Name: name,
-			//ImageSizeBytes: sizeByte,
+			Name:           name,
 			ImageSizeBytes: uint(sizeByte),
 			Tag:            gdigest.Tag,
 			Created:        timeCreated,
