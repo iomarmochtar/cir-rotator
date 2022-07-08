@@ -34,6 +34,7 @@ type Config struct {
 	DryRun             bool
 	ExcludeFilters     []string
 	IncludeFilters     []string
+	AllowInsecure      bool
 
 	excludeEngine fl.IFilterEngine
 	includeEngine fl.IFilterEngine
@@ -160,6 +161,7 @@ func (c *Config) initSkipList() (err error) {
 }
 
 func (c *Config) initHTTPClient() (err error) {
+	hcOptions := http.Option{AllowInsecureSSL: c.AllowInsecure}
 	// prioritizing service path setups
 	if c.ServiceAccountPath != "" {
 		tokenGenerator := reg.TokenGeneratorMapper[c.RegistryType]
@@ -174,7 +176,8 @@ func (c *Config) initHTTPClient() (err error) {
 		if err != nil {
 			return err
 		}
-		if c.httpClient, err = http.New(http.Option{Token: token}); err != nil {
+		hcOptions.Token = token
+		if c.httpClient, err = http.New(hcOptions); err != nil {
 			return err
 		}
 	} else {
@@ -186,10 +189,11 @@ func (c *Config) initHTTPClient() (err error) {
 			return fmt.Errorf("you must set registry username")
 		}
 
-		if c.httpClient, err = http.New(http.Option{BasicAuth: struct {
+		hcOptions.BasicAuth = struct {
 			Username string
 			Password string
-		}{c.Username(), c.Password()}}); err != nil {
+		}{c.Username(), c.Password()}
+		if c.httpClient, err = http.New(hcOptions); err != nil {
 			return err
 		}
 	}

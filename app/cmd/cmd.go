@@ -29,6 +29,11 @@ var (
 			Name:  "output-json",
 			Usage: "dump result as json file",
 		},
+		&cli.BoolFlag{
+			Name:    "allow-insecure",
+			Usage:   "allow insecure ssl verify",
+			EnvVars: []string{"ALLOW_INSECURE_SSL"},
+		},
 		&cli.StringFlag{
 			Name:    "basic-auth-user",
 			Aliases: []string{"u"},
@@ -147,6 +152,7 @@ func initConfig(ctx *cli.Context) (config.IConfig, error) {
 		DryRun:             ctx.Bool("dry-run"),
 		ExcludeFilters:     ctx.StringSlice("exclude-filter"),
 		IncludeFilters:     ctx.StringSlice("include-filter"),
+		AllowInsecure:      ctx.Bool("allow-insecure"),
 	}
 	if err := cfg.Init(); err != nil {
 		return nil, err

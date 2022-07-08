@@ -18,7 +18,8 @@ type Option struct {
 		Username string
 		Password string
 	}
-	Token *oauth2.Token
+	Token            *oauth2.Token
+	AllowInsecureSSL bool
 }
 
 type Client struct {
@@ -26,7 +27,11 @@ type Client struct {
 }
 
 func New(o Option) (IHttpClient, error) {
-	request := req.C().R()
+	httpClient := req.C()
+	if o.AllowInsecureSSL {
+		httpClient.EnableInsecureSkipVerify()
+	}
+	request := httpClient.R()
 	if o.Token != nil {
 		request.SetHeader("Authorization", fmt.Sprintf("%s %s", o.Token.TokenType, o.Token.AccessToken))
 	} else if o.BasicAuth.Username != "" && o.BasicAuth.Password != "" {
