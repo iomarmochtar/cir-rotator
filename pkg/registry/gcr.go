@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 
 	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	"github.com/iomarmochtar/cir-rotator/pkg/http"
@@ -69,7 +70,9 @@ func (g *GCR) tagList(repository string) (err error) {
 		return fmt.Errorf("[%s] [%s]", jsonBody.Errors[0].Code, jsonBody.Errors[0].Message)
 	}
 
+	log.Debug().Str("repo", repository).Msg("processing")
 	if len(jsonBody.Child) != 0 {
+		log.Debug().Msgf("detected %d child(s) in repository %s", len(jsonBody.Child), repository)
 		for _, child := range jsonBody.Child {
 			nextRepo := fmt.Sprintf("%s/%s", repository, child)
 			if err = g.tagList(nextRepo); err != nil {
@@ -79,13 +82,14 @@ func (g *GCR) tagList(repository string) (err error) {
 	}
 	// ignore if it's doesn't has any manifest attached
 	if len(jsonBody.Manifest) == 0 {
+		log.Debug().Str("repo", repository).Msg("not found any digests found, skipping")
 		return nil
 	}
 
 	//nolint:prealloc
 	var digest []Digest
 	for name, gdigest := range jsonBody.Manifest {
-		sizeByte, err := strconv.ParseUint(gdigest.ImageSizeBytes, 10, 32)
+		sizeByte, err := strconv.ParseUint(gdigest.ImageSizeBytes, 10, 64)
 		if err != nil {
 			return errors.Wrap(err, "while converting image size")
 		}
