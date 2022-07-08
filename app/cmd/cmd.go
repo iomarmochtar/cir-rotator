@@ -114,6 +114,27 @@ func dumpToJSON(repositories []reg.Repository, jsonPath string) error {
 	return nil
 }
 
+func doList(a *app.App, ctx *cli.Context) ([]reg.Repository, error) {
+	repositories, err := a.ListRepositories()
+	if err != nil {
+		return nil, err
+	}
+
+	if ctx.Bool("output-table") {
+		printTable(repositories)
+	}
+
+	if outputJSON := ctx.String("output-json"); outputJSON != "" {
+		if err = dumpToJSON(repositories, outputJSON); err != nil {
+			return nil, err
+		}
+
+		log.Info().Msgf("json output result written to %s", outputJSON)
+	}
+
+	return repositories, nil
+}
+
 // initConfig create configuration instance from given cmd arguments
 func initConfig(ctx *cli.Context) (config.IConfig, error) {
 	cfg := &config.Config{
