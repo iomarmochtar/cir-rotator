@@ -6,19 +6,19 @@ import (
 )
 
 const (
-	UnitMilliSecond = 1000
+	unitMilliSecond = 1000
 )
 
-func ConvertTimeStrToUnix(timeStr string, unit int64) (time.Time, error) {
+func ConvertTimeStrToUnix(timeStr string) (time.Time, error) {
 	parsed, err := strconv.ParseInt(timeStr, 10, 64)
 	if err != nil {
 		return time.Time{}, err
 	}
-	return time.Unix(parsed/unit, 0), nil
+	return time.Unix(parsed/unitMilliSecond, 0), nil
 }
 
-func ConvertTimeStrToReadAble(timeStr string, unit int64) (string, error) {
-	uTime, err := ConvertTimeStrToUnix(timeStr, unit)
+func ConvertTimeStrToReadAble(timeStr string) (string, error) {
+	uTime, err := ConvertTimeStrToUnix(timeStr)
 	if err != nil {
 		return "", err
 	}

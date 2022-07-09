@@ -1,171 +1,123 @@
 package app
 
 import (
-	"encoding/json"
-	"io/ioutil"
-	"os"
-	"time"
+	"fmt"
 
-	"strings"
-
-	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
-	"github.com/rs/zerolog/pkgerrors"
-	"github.com/urfave/cli/v2"
-
-	c "github.com/iomarmochtar/cir-rotator/pkg/config"
-	"github.com/iomarmochtar/cir-rotator/pkg/helpers"
+	c "github.com/iomarmochtar/cir-rotator/app/config"
+	fl "github.com/iomarmochtar/cir-rotator/pkg/filter"
+	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	reg "github.com/iomarmochtar/cir-rotator/pkg/registry"
-	"github.com/jedib0t/go-pretty/table"
+	"github.com/rs/zerolog/log"
 )
 
 const VERSION = "0.1.0"
 
-var (
-	commonFlags = []cli.Flag{
-		&cli.BoolFlag{
-			Name:  "output-table",
-			Usage: "show output as table to stdout",
-			Value: true,
-		},
-		&cli.StringFlag{
-			Name:  "output-json",
-			Usage: "dump result as json file",
-		},
-		&cli.StringFlag{
-			Name:    "basic-auth-user",
-			Aliases: []string{"u"},
-			Usage:   "basic authentication user",
-			EnvVars: []string{"BASIC_AUTH_USER"},
-		},
-		&cli.StringFlag{
-			Name:    "basic-auth-pwd",
-			Aliases: []string{"p"},
-			Usage:   "basic authentication password",
-			EnvVars: []string{"BASIC_AUTH_PWD"},
-		},
-		&cli.StringFlag{
-			Name:     "host",
-			Aliases:  []string{"ho"},
-			Usage:    "registry host",
-			Required: true,
-			EnvVars:  []string{"REGISTRY_HOST"},
-		},
-		&cli.StringFlag{
-			Name:    "type",
-			Aliases: []string{"t"},
-			Usage:   "registry type",
-			EnvVars: []string{"REGISTRY_TYPE"},
-		},
-		&cli.StringFlag{
-			Name:    "service-account",
-			Aliases: []string{"f"},
-			Usage:   "service account file path, it cannot be combined if basic auth args are provided",
-			EnvVars: []string{"SA_FILE"},
-		},
-		&cli.StringSliceFlag{
-			Name:    "exclude-filter",
-			Aliases: []string{"ef"},
-			Usage:   "excluding result",
-		},
-		&cli.StringSliceFlag{
-			Name:    "include-filter",
-			Aliases: []string{"if"},
-			Usage:   "only process the results of filter",
-		},
-	}
-)
-
-// initConfig create configuration instance from given cmd arguments
-func initConfig(ctx *cli.Context) (c.IConfig, error) {
-	cfg := &c.Config{
-		Debug:              ctx.Bool("debug"),
-		OutputTable:        ctx.Bool("output-table"),
-		OutputJson:         ctx.String("output-json"),
-		RegUsername:        ctx.String("basic-auth-user"),
-		RegPassword:        ctx.String("basic-auth-pwd"),
-		ServiceAccountPath: ctx.String("service-account"),
-		RegistryHost:       ctx.String("host"),
-		RegistryType:       ctx.String("type"),
-		ExcludeFilters:     ctx.StringSlice("exclude-filter"),
-		IncludeFilters:     ctx.StringSlice("include-filter"),
-	}
-	if err := cfg.Init(); err != nil {
-		return nil, err
-	}
-	return cfg, nil
+type App struct {
+	config c.IConfig
 }
 
-func printTable(repositories []reg.Repository) {
-	t := table.NewWriter()
-	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"#", "DIGEST", "REPO", "IMAGE_TAG", "SIZE", "DATE_CREATED", "DATE_UPLOADED"})
+func New(config c.IConfig) *App {
+	return &App{config}
+}
 
-	var totalSize uint
-	i := 0
+func (a App) ListRepositories() ([]reg.Repository, error) {
+	return a.fetchAndFilterRepositories()
+}
 
-	for _, repo := range repositories {
-		for _, digest := range repo.Digests {
-			i++
-			// digest is always prefixed with 'sha256:'
-			digestSlug := digest.Name[:27] + "…"
-
-			tagsSlug := strings.Join(digest.Tag, ",")
-
-			if len(tagsSlug) > 30 {
-				tagsSlug = tagsSlug[:27] + "…"
-			}
-
-			totalSize += digest.ImageSizeBytes
-			t.AppendRow([]interface{}{i, digestSlug, repo.Name, tagsSlug, helpers.ByteCountIEC(digest.ImageSizeBytes), digest.Created, digest.Uploaded})
+func (a App) DeleteRepositories(repositories []reg.Repository) (err error) {
+	for idr := range repositories {
+		repo := repositories[idr]
+		if image, skipped := isInSkipList(repo, a.config.SkipList()); skipped {
+			log.Info().Str("image", image).Msg("listed in skip list, ignoring")
+			continue
 		}
-	}
-
-	t.AppendFooter(table.Row{"", "", "", "Total", helpers.ByteCountIEC(totalSize)})
-	t.Render()
-}
-
-func dumpToJson(repositories []reg.Repository, jsonPath string) error {
-	data, err := json.Marshal(repositories)
-	if err != nil {
-		return err
-	}
-
-	if err = ioutil.WriteFile(jsonPath, data, 0755); err != nil {
-		return err
+		log.Info().Str("repo", repo.Name).Msg("deleting repository")
+		if err = a.config.ImageRegistry().Delete(repo, a.config.IsDryRun()); err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func NewApp() cli.App {
-	return cli.App{
-		Name:                 "cir-rotator",
-		Usage:                "an app for managing container image registry contents",
-		Version:              VERSION,
-		Compiled:             time.Now(),
-		EnableBashCompletion: true,
-		Commands: []*cli.Command{
-			ListAction(),
-			DeleteAction(),
-		},
-		Flags: []cli.Flag{
-			&cli.BoolFlag{
-				Name:    "debug",
-				Aliases: []string{"d"},
-				Usage:   "Enable debug mode",
-				EnvVars: []string{"DEBUG_MODE"},
-			},
-		},
-		Before: func(ctx *cli.Context) error {
-			zerolog.SetGlobalLevel(zerolog.InfoLevel)
-			if ctx.Bool("debug") {
-				zerolog.SetGlobalLevel(zerolog.DebugLevel)
-				zerolog.ErrorStackMarshaler = pkgerrors.MarshalStack
-			} else {
-				log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
+func (a App) fetchAndFilterRepositories() ([]reg.Repository, error) {
+	repositories, err := a.config.ImageRegistry().Catalog()
+	if err != nil {
+		return nil, err
+	}
+
+	includeFilter := a.config.IncludeEngine()
+	excludeFilter := a.config.ExcludeEngine()
+	// if there is no filters then just return as is
+	if includeFilter == nil && excludeFilter == nil {
+		return repositories, nil
+	}
+
+	return doFilter(repositories, includeFilter, excludeFilter)
+}
+
+// filterRepositories filter listing repositories and digest based in include and exclude filters
+func doFilter(repositories []reg.Repository, includeFilter, excludeFilter fl.IFilterEngine) ([]reg.Repository, error) {
+	//nolint:prealloc
+	var result []reg.Repository
+
+	for idr := range repositories {
+		repo := repositories[idr]
+		var resultDigest []reg.Digest
+		for idd := range repo.Digests {
+			digest := repo.Digests[idd]
+			fields := fl.Fields{
+				Repository: repo.Name,
+				Digest:     digest.Name,
+				ImageSize:  digest.ImageSizeBytes,
+				Tags:       digest.Tag,
+				CreatedAt:  digest.Created,
+				UploadedAt: digest.Uploaded,
 			}
 
-			return nil
-		},
+			if includeFilter != nil {
+				iResult, err := includeFilter.Process(fields)
+				if err != nil {
+					return nil, err
+				}
+				if !iResult {
+					continue
+				}
+			}
+
+			if excludeFilter != nil {
+				eResult, err := excludeFilter.Process(fields)
+				if err != nil {
+					return nil, err
+				}
+				if eResult {
+					continue
+				}
+			}
+			resultDigest = append(resultDigest, digest)
+		}
+
+		if len(resultDigest) == 0 {
+			continue
+		}
+		result = append(result, reg.Repository{Name: repo.Name, Digests: resultDigest})
 	}
+	return result, nil
+}
+
+func isInSkipList(repo reg.Repository, skipList []string) (matches string, skip bool) {
+	if len(skipList) == 0 {
+		return "", false
+	}
+
+	for idd := range repo.Digests {
+		digest := repo.Digests[idd]
+		for idt := range digest.Tag {
+			imageName := fmt.Sprintf("%s:%s", repo.Name, digest.Tag[idt])
+			if h.IsInList[string](imageName, skipList) {
+				return imageName, true
+			}
+		}
+	}
+
+	return "", false
 }

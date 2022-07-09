@@ -36,3 +36,23 @@ func ReadLines(filePath string) ([]string, error) {
 func SlashJoin(parts ...string) string {
 	return strings.Join(parts, "/")
 }
+
+func CombineMaps[k string, v any](s1 map[k]v, s2 map[k]v) map[k]v {
+	result := make(map[k]v)
+	merge := func(kvS map[k]v, kvD map[k]v) {
+		for a, b := range kvS {
+			kvD[a] = b
+		}
+	}
+	merge(s1, result)
+	merge(s2, result)
+	return result
+}
+
+func FileExist(filename string) bool {
+	info, err := os.Stat(filename)
+	if os.IsNotExist(err) {
+		return false
+	}
+	return !info.IsDir()
+}

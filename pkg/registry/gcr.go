@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/pkg/errors"
+	"github.com/rs/zerolog/log"
 
 	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	"github.com/iomarmochtar/cir-rotator/pkg/http"
@@ -69,41 +70,42 @@ func (g *GCR) tagList(repository string) (err error) {
 		return fmt.Errorf("[%s] [%s]", jsonBody.Errors[0].Code, jsonBody.Errors[0].Message)
 	}
 
+	log.Debug().Str("repo", repository).Msg("processing")
 	if len(jsonBody.Child) != 0 {
+		log.Debug().Msgf("detected %d child(s) in repository %s", len(jsonBody.Child), repository)
 		for _, child := range jsonBody.Child {
 			nextRepo := fmt.Sprintf("%s/%s", repository, child)
 			if err = g.tagList(nextRepo); err != nil {
 				return err
 			}
-
 		}
 	}
 	// ignore if it's doesn't has any manifest attached
 	if len(jsonBody.Manifest) == 0 {
+		log.Debug().Str("repo", repository).Msg("not found any digests found, skipping")
 		return nil
 	}
 
+	//nolint:prealloc
 	var digest []Digest
 	for name, gdigest := range jsonBody.Manifest {
-		sizeByte, err := strconv.ParseUint(gdigest.ImageSizeBytes, 10, 32)
-		//sizeByte, err := strconv.Atoi(gdigest.ImageSizeBytes)
+		sizeByte, err := strconv.ParseUint(gdigest.ImageSizeBytes, 10, 64)
 		if err != nil {
 			return errors.Wrap(err, "while converting image size")
 		}
 
-		timeCreated, err := h.ConvertTimeStrToUnix(gdigest.TimeCreatedMs, h.UnitMilliSecond)
+		timeCreated, err := h.ConvertTimeStrToUnix(gdigest.TimeCreatedMs)
 		if err != nil {
 			return errors.Wrap(err, "while parse created time")
 		}
 
-		timeUploaded, err := h.ConvertTimeStrToUnix(gdigest.TimeUploadedMs, h.UnitMilliSecond)
+		timeUploaded, err := h.ConvertTimeStrToUnix(gdigest.TimeUploadedMs)
 		if err != nil {
 			return errors.Wrap(err, "while parse uploaded time")
 		}
 
 		digest = append(digest, Digest{
-			Name: name,
-			//ImageSizeBytes: sizeByte,
+			Name:           name,
 			ImageSizeBytes: uint(sizeByte),
 			Tag:            gdigest.Tag,
 			Created:        timeCreated,
@@ -118,19 +120,19 @@ func (g *GCR) tagList(repository string) (err error) {
 
 func (g GCR) Delete(repository Repository, isDryRun bool) (err error) {
 	shortRepoName := strings.TrimPrefix(repository.Name, fmt.Sprintf("%s/", g.host))
-	manifestUrl := fmt.Sprintf("https://%s/v2/%s/manifests", g.host, shortRepoName)
+	manifestURL := fmt.Sprintf("https://%s/v2/%s/manifests", g.host, shortRepoName)
 	for idr := range repository.Digests {
 		digest := repository.Digests[idr]
 		// delete the related tags
 		for idt := range digest.Tag {
-			tagUrl := fmt.Sprintf("%s/%s", manifestUrl, digest.Tag[idt])
-			if err = deleteImage(g.hc, tagUrl, isDryRun); err != nil {
+			tagURL := fmt.Sprintf("%s/%s", manifestURL, digest.Tag[idt])
+			if err = deleteImage(g.hc, tagURL, isDryRun); err != nil {
 				return err
 			}
 		}
 
-		digestUrl := fmt.Sprintf("%s/%s", manifestUrl, digest.Name)
-		if err = deleteImage(g.hc, digestUrl, isDryRun); err != nil {
+		digestURL := fmt.Sprintf("%s/%s", manifestURL, digest.Name)
+		if err = deleteImage(g.hc, digestURL, isDryRun); err != nil {
 			return err
 		}
 	}

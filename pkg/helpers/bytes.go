@@ -39,7 +39,6 @@ func ByteCountIEC(input uint) string {
 	}
 	return fmt.Sprintf("%.1f %ciB",
 		float64(input)/float64(div), "KMGTPE"[exp])
-
 }
 
 func SizeUnitStrToFloat(input string) (float64, error) {

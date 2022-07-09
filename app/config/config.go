@@ -5,51 +5,63 @@ import (
 	"io/ioutil"
 
 	fl "github.com/iomarmochtar/cir-rotator/pkg/filter"
+	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	http "github.com/iomarmochtar/cir-rotator/pkg/http"
 	reg "github.com/iomarmochtar/cir-rotator/pkg/registry"
 )
 
+//go:generate mockgen -destination mock_config/mock_config.go -source config.go IConfig
 type IConfig interface {
-	IsDebug() bool
-	IsOutputTable() bool
-	OutputJsonPath() string
 	Username() string
 	Password() string
+	SkipList() []string
+	IsDryRun() bool
 	Host() string
 	ImageRegistry() reg.ImageRegistry
 	ExcludeEngine() fl.IFilterEngine
 	IncludeEngine() fl.IFilterEngine
-	HttpClient() http.IHttpClient
+	HTTPClient() http.IHttpClient
 	Init() error
 }
 
 type Config struct {
-	Debug              bool
 	RegUsername        string
 	RegPassword        string
 	ServiceAccountPath string
 	RegistryHost       string
 	RegistryType       string
+	SkipListPath       string
+	DryRun             bool
 	ExcludeFilters     []string
 	IncludeFilters     []string
-	OutputJson         string
-	OutputTable        bool
+	AllowInsecure      bool
 
 	excludeEngine fl.IFilterEngine
 	includeEngine fl.IFilterEngine
 	imageReg      reg.ImageRegistry
 	httpClient    http.IHttpClient
+	skipList      []string
 }
 
 // Init is validating inputs and setups some dependencies for the application to run
 func (c *Config) Init() (err error) {
+	// registry type
+	if err = c.initRegType(); err != nil {
+		return err
+	}
+
 	// http client
-	if err = c.initHttpClient(); err != nil {
+	if err = c.initHTTPClient(); err != nil {
 		return err
 	}
 
 	// setup image registry
 	if err = c.initImageReg(); err != nil {
+		return err
+	}
+
+	// skip list that will be used in delete actions
+	if err = c.initSkipList(); err != nil {
 		return err
 	}
 
@@ -61,8 +73,12 @@ func (c *Config) Init() (err error) {
 	return nil
 }
 
-func (c Config) IsDebug() bool {
-	return c.Debug
+func (c Config) SkipList() []string {
+	return c.skipList
+}
+
+func (c Config) IsDryRun() bool {
+	return c.DryRun
 }
 
 func (c Config) Username() string {
@@ -77,7 +93,7 @@ func (c Config) Host() string {
 	return c.RegistryHost
 }
 
-func (c Config) HttpClient() http.IHttpClient {
+func (c Config) HTTPClient() http.IHttpClient {
 	return c.httpClient
 }
 
@@ -89,31 +105,29 @@ func (c Config) IncludeEngine() fl.IFilterEngine {
 	return c.includeEngine
 }
 
-func (c Config) IsOutputTable() bool {
-	return c.OutputTable
-}
-
-func (c Config) OutputJsonPath() string {
-	return c.OutputJson
-}
-
 // ImageRegistry get related image registry based on known host if not mentioned
 // directly for image host name
 func (c Config) ImageRegistry() reg.ImageRegistry {
 	return c.imageReg
 }
 
-func (c *Config) initImageReg() (err error) {
+func (c *Config) initRegType() (err error) {
+	if c.Host() == "" {
+		return fmt.Errorf("registry host is required")
+	}
 	// if registry type was not mentioned then try do determinte it by hostname
-	regType := c.RegistryType
-	if regType == "" {
-		if regType, err = reg.GetImageRegistryByHostname(c.Host()); err != nil {
+	if c.RegistryType == "" {
+		if c.RegistryType, err = reg.GetImageRegistryByHostname(c.Host()); err != nil {
 			return err
 		}
 	}
-	imageRegFn := reg.RegistryMapper[regType]
+	return nil
+}
+
+func (c *Config) initImageReg() (err error) {
+	imageRegFn := reg.RegistryMapper[c.RegistryType]
 	if imageRegFn == nil {
-		return fmt.Errorf("unkown image registry type %s", regType)
+		return fmt.Errorf("unknown image registry type %s", c.RegistryType)
 	}
 
 	if c.imageReg, err = imageRegFn(c.Host(), c.httpClient); err != nil {
@@ -137,7 +151,17 @@ func (c *Config) initFilters() (err error) {
 	return nil
 }
 
-func (c *Config) initHttpClient() (err error) {
+func (c *Config) initSkipList() (err error) {
+	if c.SkipListPath != "" {
+		if c.skipList, err = h.ReadLines(c.SkipListPath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (c *Config) initHTTPClient() (err error) {
+	hcOptions := http.Option{AllowInsecureSSL: c.AllowInsecure}
 	// prioritizing service path setups
 	if c.ServiceAccountPath != "" {
 		tokenGenerator := reg.TokenGeneratorMapper[c.RegistryType]
@@ -152,7 +176,8 @@ func (c *Config) initHttpClient() (err error) {
 		if err != nil {
 			return err
 		}
-		if c.httpClient, err = http.New(http.Option{Token: token}); err != nil {
+		hcOptions.Token = token
+		if c.httpClient, err = http.New(hcOptions); err != nil {
 			return err
 		}
 	} else {
@@ -164,10 +189,11 @@ func (c *Config) initHttpClient() (err error) {
 			return fmt.Errorf("you must set registry username")
 		}
 
-		if c.httpClient, err = http.New(http.Option{BasicAuth: struct {
+		hcOptions.BasicAuth = struct {
 			Username string
 			Password string
-		}{c.Username(), c.Password()}}); err != nil {
+		}{c.Username(), c.Password()}
+		if c.httpClient, err = http.New(hcOptions); err != nil {
 			return err
 		}
 	}

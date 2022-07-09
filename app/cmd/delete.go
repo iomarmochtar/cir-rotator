@@ -1,8 +1,7 @@
-package app
+package cmd
 
 import (
-	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
-	u "github.com/iomarmochtar/cir-rotator/pkg/usecases"
+	"github.com/iomarmochtar/cir-rotator/app"
 	"github.com/urfave/cli/v2"
 )
 
@@ -26,18 +25,13 @@ func DeleteAction() *cli.Command {
 				return err
 			}
 
-			repositories, err := doList(cfg)
+			app := app.New(cfg)
+			repositories, err := doList(app, ctx)
 			if err != nil {
 				return err
 			}
-			var skipList []string
-			if skipListPath := ctx.String("skip-list"); skipListPath != "" {
-				if skipList, err = h.ReadLines(skipListPath); err != nil {
-					return err
-				}
-			}
 
-			if err = u.DeleteRepositories(cfg.ImageRegistry(), repositories, skipList, ctx.Bool("dry-run")); err != nil {
+			if err = app.DeleteRepositories(repositories); err != nil {
 				return err
 			}
 

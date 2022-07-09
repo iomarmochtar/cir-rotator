@@ -1,0 +1,41 @@
+
+name: tests
+on: [pull_request, workflow_dispatch]
+
+env:
+  GO_VERSION: 1.18
+  LINTER_VERSION: 1.46.0
+  CGO_ENABLED: 0
+
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - uses: golangci/golangci-lint-action@v3
+        with:
+          version: v${{ env.LINTER_VERSION }}
+  
+  unit-test:
+    name: unit-test 
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: ${{ env.GO_VERSION }}
+      - name: install required packages
+        run: sudo apt install -y make
+      - run: make test 
+      # code coverage update
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          files: coverage.txt
+          verbose: true
