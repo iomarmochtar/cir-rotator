@@ -1,0 +1,35 @@
+project_name: cir-rotator
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: main.go 
+    env:
+      - CGO_ENABLED=0
+      - GO111MODULE=on
+    goos:
+      - darwin
+      - linux
+      - windows
+    goarch:
+      - amd64
+    hooks:
+      post:
+        - upx --brute "{{ .Path }}"
+
+checksum:
+  name_template: 'checksums.txt'
+
+archives:
+  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}_{{ .Version }}'
+    format: tar.gz
+    replacements:
+      darwin: Darwin
+      linux: Linux
+      windows: Windows
+      386: i386
+      amd64: x86_64
+    format_overrides:
+      - goos: windows
+        format: zip
