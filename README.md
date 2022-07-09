@@ -4,7 +4,9 @@
     <p align="center"><strong>Container Image Registry Rotator</strong></p>
     <p align="center">
         <a href="https://goreportcard.com/report/github.com/iomarmochtar/cir-rotator"><img src="https://goreportcard.com/badge/github.com/iomarmochtar/cir-rotator" alt="Go Report Card"></a>
-    </p> 
+        <a href="https://codecov.io/gh/iomarmochtar/cir-rotator" > 
+            <img src="https://codecov.io/gh/iomarmochtar/cir-rotator/branch/main/graph/badge.svg?token=MM0M02CDL1"/> 
+        </a>
 </p>
 
 Container image registry can be a collection of trash since it is mostly used for service deployment and the total size can be increased gradually so then it bills us for something we don’t use anymore. 
