@@ -20,7 +20,7 @@ So this tools can help you create a rotation mechanism for it, by using the powe
 ```
 ./cir-rotator delete --service-account sa.json -ho asia.gcr.io/parent-repo \
                      --if "Now() - UploadedAt >= Duration('6M')  and ImageSize >= SizeStr('100 MiB')" \
-                     --ef "Repository matches '.*base-image$' and 'latest' in Tag" \
+                     --ef "Repository matches '.*base-image$' and 'latest' in Tags" \
                      --ef "Repository matches '.*internal-tools.*'"
 ```
 
