@@ -1,6 +1,7 @@
 package cmd_test
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/iomarmochtar/cir-rotator/app/cmd"
 	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	"github.com/stretchr/testify/assert"
 	cli "github.com/urfave/cli/v2"
@@ -121,4 +123,16 @@ func runCmdTestCases(name string, command *cli.Command, testCases map[string]cas
 			}
 		})
 	}
+}
+
+func TestNew(t *testing.T) {
+	// get version
+	buf := new(bytes.Buffer)
+	app := cmd.New()
+	app.Writer = buf
+	err := app.Run([]string{"cir-rotator", "--version"})
+	output := buf.String()
+
+	assert.NoError(t, err)
+	assert.Equal(t, fmt.Sprintf("cir-rotator version %s\n", app.Version), output)
 }
