@@ -14,7 +14,7 @@ func ConvertTimeStrToUnix(timeStr string) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	return time.Unix(parsed/unitMilliSecond, 0), nil
+	return time.Unix(parsed/unitMilliSecond, 0).UTC(), nil
 }
 
 func ConvertTimeStrToReadAble(timeStr string) (string, error) {
