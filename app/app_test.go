@@ -196,6 +196,30 @@ func TestApp_ListRepositories(t *testing.T) {
 }
 
 func TestApp_DeleteRepositories(t *testing.T) {
+	// construct sample data from sample repo with some additions to match with the test case
+	var repoWithMoreDigest []reg.Repository
+	repoWithMoreDigest = append(repoWithMoreDigest, sampleRepos...)
+	deleteRepoDigest := reg.Digest{
+		Name:           "sha256:01551c49819f8bda0a8bdc6216e5793404b0adb4937d407e99a590c0c5cb8078",
+		ImageSizeBytes: 488119934,
+		Tag:            []string{"release-prod-abc"},
+		Created:        time.Date(2022, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+		Uploaded:       time.Date(2022, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+	}
+	repoWithMoreDigest[0].Digests = append(repoWithMoreDigest[0].Digests, deleteRepoDigest)
+	repoWithMoreDigest = append(repoWithMoreDigest, reg.Repository{
+		Name: "image-3",
+		Digests: []reg.Digest{
+			{
+				Name:           "sha256:B0ac9df37ff356753cd20f4475d4b8d3a543b4d45db2390c0275be2ee7a0xyz",
+				ImageSizeBytes: 488118834,
+				Tag:            []string{"abc", "def"},
+				Created:        time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+				Uploaded:       time.Date(2021, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+			},
+		},
+	})
+
 	testCases := map[string]struct {
 		mockConfig   func(*gomock.Controller) *mc.MockIConfig
 		repositories []reg.Repository
@@ -218,15 +242,17 @@ func TestApp_DeleteRepositories(t *testing.T) {
 		"found in skip list": {
 			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
 				mockReg := mr.NewMockImageRegistry(ctrl)
-				mockReg.EXPECT().Delete(sampleRepos[1], false).Times(1).Return(nil)
+				expetedDeleteRepoImage1 := reg.Repository{Name: "image-1", Digests: []reg.Digest{deleteRepoDigest}}
+				mockReg.EXPECT().Delete(repoWithMoreDigest[1], false).Times(1).Return(nil)
+				mockReg.EXPECT().Delete(expetedDeleteRepoImage1, false).Times(1).Return(nil)
 
 				mockConfig := mc.NewMockIConfig(ctrl)
-				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
-				mockConfig.EXPECT().SkipList().Times(2).Return([]string{"image-1:latest"})
-				mockConfig.EXPECT().IsDryRun().Times(1).Return(false)
+				mockConfig.EXPECT().ImageRegistry().Times(2).Return(mockReg)
+				mockConfig.EXPECT().SkipList().Times(1).Return([]string{"image-1:latest", "image-3:abc", "image-3:def"})
+				mockConfig.EXPECT().IsDryRun().Times(2).Return(false)
 				return mockConfig
 			},
-			repositories: sampleRepos,
+			repositories: repoWithMoreDigest,
 		},
 	}
 
