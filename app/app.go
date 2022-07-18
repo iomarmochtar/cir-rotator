@@ -25,10 +25,16 @@ func (a App) ListRepositories() ([]reg.Repository, error) {
 }
 
 func (a App) DeleteRepositories(repositories []reg.Repository) (err error) {
+	skipList := a.config.SkipList()
 	for idr := range repositories {
 		repo := repositories[idr]
-		if image, skipped := isInSkipList(repo, a.config.SkipList()); skipped {
-			log.Info().Str("image", image).Msg("listed in skip list, ignoring")
+		// filter the list of tags if skiplist provided, if it's matched then ignore the related digest for deletion
+		if len(skipList) != 0 {
+			filterRepositoryDigestBySkipList(&repo, skipList)
+		}
+		// if there is no such digests in repository so then nothing todo with it.
+		if len(repo.Digests) == 0 {
+			log.Warn().Str("repo", repo.Name).Msg("no digest found as for deleting in repository, skip it")
 			continue
 		}
 		log.Info().Str("repo", repo.Name).Msg("deleting repository")
@@ -104,20 +110,22 @@ func doFilter(repositories []reg.Repository, includeFilter, excludeFilter fl.IFi
 	return result, nil
 }
 
-func isInSkipList(repo reg.Repository, skipList []string) (matches string, skip bool) {
-	if len(skipList) == 0 {
-		return "", false
-	}
-
+func filterRepositoryDigestBySkipList(repo *reg.Repository, skipList []string) {
+	tmpDigests := []reg.Digest{}
 	for idd := range repo.Digests {
+		includeDigest := true
 		digest := repo.Digests[idd]
 		for idt := range digest.Tag {
 			imageName := fmt.Sprintf("%s:%s", repo.Name, digest.Tag[idt])
-			if h.IsInList[string](imageName, skipList) {
-				return imageName, true
+			if h.IsInList(imageName, skipList) {
+				includeDigest = false
+				log.Info().Str("image", imageName).Str("digest", digest.Name).Msg("listed in skip list, ignoring related digest")
+				break
 			}
 		}
+		if includeDigest {
+			tmpDigests = append(tmpDigests, digest)
+		}
 	}
-
-	return "", false
+	repo.Digests = tmpDigests
 }

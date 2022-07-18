@@ -196,6 +196,17 @@ func TestApp_ListRepositories(t *testing.T) {
 }
 
 func TestApp_DeleteRepositories(t *testing.T) {
+	deleteRepoDigest := reg.Digest{
+
+		Name:           "sha256:01551c49819f8bda0a8bdc6216e5793404b0adb4937d407e99a590c0c5cb8078",
+		ImageSizeBytes: 488119934,
+		Tag:            []string{"release-prod-abc"},
+		Created:        time.Date(2022, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+		Uploaded:       time.Date(2022, time.Month(2), 21, 1, 10, 30, 0, time.UTC),
+	}
+	repoWithMoreDigest := sampleRepos
+	repoWithMoreDigest[0].Digests = append(repoWithMoreDigest[0].Digests, deleteRepoDigest)
+
 	testCases := map[string]struct {
 		mockConfig   func(*gomock.Controller) *mc.MockIConfig
 		repositories []reg.Repository
@@ -218,15 +229,17 @@ func TestApp_DeleteRepositories(t *testing.T) {
 		"found in skip list": {
 			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
 				mockReg := mr.NewMockImageRegistry(ctrl)
-				mockReg.EXPECT().Delete(sampleRepos[1], false).Times(1).Return(nil)
+				expetedDeleteRepoImage1 := reg.Repository{Name: "image-1", Digests: []reg.Digest{deleteRepoDigest}}
+				mockReg.EXPECT().Delete(repoWithMoreDigest[1], false).Times(1).Return(nil)
+				mockReg.EXPECT().Delete(expetedDeleteRepoImage1, false).Times(1).Return(nil)
 
 				mockConfig := mc.NewMockIConfig(ctrl)
-				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
-				mockConfig.EXPECT().SkipList().Times(2).Return([]string{"image-1:latest"})
-				mockConfig.EXPECT().IsDryRun().Times(1).Return(false)
+				mockConfig.EXPECT().ImageRegistry().Times(2).Return(mockReg)
+				mockConfig.EXPECT().SkipList().Times(1).Return([]string{"image-1:latest"})
+				mockConfig.EXPECT().IsDryRun().Times(2).Return(false)
 				return mockConfig
 			},
-			repositories: sampleRepos,
+			repositories: repoWithMoreDigest,
 		},
 	}
 
