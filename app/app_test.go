@@ -228,7 +228,7 @@ func TestApp_DeleteRepositories(t *testing.T) {
 		"got an error while deleting image": {
 			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
 				mockReg := mr.NewMockImageRegistry(ctrl)
-				mockReg.EXPECT().Delete(sampleRepos[0], false).Times(1).Return(fmt.Errorf("failure"))
+				mockReg.EXPECT().Delete(sampleRepos[0]).Times(1).Return(fmt.Errorf("failure"))
 
 				mockConfig := mc.NewMockIConfig(ctrl)
 				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
@@ -243,13 +243,23 @@ func TestApp_DeleteRepositories(t *testing.T) {
 			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
 				mockReg := mr.NewMockImageRegistry(ctrl)
 				expetedDeleteRepoImage1 := reg.Repository{Name: "image-1", Digests: []reg.Digest{deleteRepoDigest}}
-				mockReg.EXPECT().Delete(repoWithMoreDigest[1], false).Times(1).Return(nil)
-				mockReg.EXPECT().Delete(expetedDeleteRepoImage1, false).Times(1).Return(nil)
+				mockReg.EXPECT().Delete(repoWithMoreDigest[1]).Times(1).Return(nil)
+				mockReg.EXPECT().Delete(expetedDeleteRepoImage1).Times(1).Return(nil)
 
 				mockConfig := mc.NewMockIConfig(ctrl)
 				mockConfig.EXPECT().ImageRegistry().Times(2).Return(mockReg)
 				mockConfig.EXPECT().SkipList().Times(1).Return([]string{"image-1:latest", "image-3:abc", "image-3:def"})
 				mockConfig.EXPECT().IsDryRun().Times(2).Return(false)
+				return mockConfig
+			},
+			repositories: repoWithMoreDigest,
+		},
+		"will not calling registry delete api when dry run is set": {
+			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
+				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().ImageRegistry().Times(0)
+				mockConfig.EXPECT().SkipList().Times(1).Return([]string{})
+				mockConfig.EXPECT().IsDryRun().Times(3).Return(true)
 				return mockConfig
 			},
 			repositories: repoWithMoreDigest,

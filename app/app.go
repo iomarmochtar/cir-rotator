@@ -37,8 +37,14 @@ func (a App) DeleteRepositories(repositories []reg.Repository) (err error) {
 			log.Warn().Str("repo", repo.Name).Msg("no digest found as for deleting in repository, skip it")
 			continue
 		}
+
+		if a.config.IsDryRun() {
+			log.Info().Str("repo", repo.Name).Msg("[DRY_RUN] attempting for deletion")
+			continue
+		}
+
 		log.Info().Str("repo", repo.Name).Msg("deleting repository")
-		if err = a.config.ImageRegistry().Delete(repo, a.config.IsDryRun()); err != nil {
+		if err = a.config.ImageRegistry().Delete(repo); err != nil {
 			return err
 		}
 	}

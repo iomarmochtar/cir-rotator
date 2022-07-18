@@ -259,18 +259,10 @@ func TestGCR_Delete(t *testing.T) {
 
 	testCases := map[string]struct {
 		mockHTTPClient func(*mh.MockIHttpClient)
-		isDryRun       bool
 		repository     reg.Repository
 		expectErrMsg   string
 	}{
-		"will not do api call for deletion if dry run is true": {
-			mockHTTPClient: func(m *mh.MockIHttpClient) {
-				m.EXPECT().DeleteMarshalReturnObj(gomock.Any(), gomock.Any()).Times(0)
-			},
-			repository: sampleRepo,
-			isDryRun:   true,
-		},
-		"will call api for deletion if dry run is false": {
+		"calling api for deletion": {
 			mockHTTPClient: func(m *mh.MockIHttpClient) {
 				manifestURL := hl.SlashJoin(gcrHostHTTPS, "v2", "parent", "sub1", "manifests")
 				// expecting call in order since the tags will be deleted first before it's digest
@@ -281,7 +273,6 @@ func TestGCR_Delete(t *testing.T) {
 				)
 			},
 			repository: sampleRepo,
-			isDryRun:   false,
 		},
 		"an error while deleting tag": {
 			mockHTTPClient: func(m *mh.MockIHttpClient) {
@@ -291,7 +282,6 @@ func TestGCR_Delete(t *testing.T) {
 				m.EXPECT().DeleteMarshalReturnObj(hl.SlashJoin(manifestURL, "sha256:C05ce64163cd2327d364933df75aa4850af425b6cbaec2f6af3b31e5246be0e2"), gomock.Any()).Times(0)
 			},
 			repository:   sampleRepo,
-			isDryRun:     false,
 			expectErrMsg: "an error while deleting tag",
 		},
 		"an error while deleting digest": {
@@ -304,7 +294,6 @@ func TestGCR_Delete(t *testing.T) {
 				)
 			},
 			repository:   sampleRepo,
-			isDryRun:     false,
 			expectErrMsg: "an error in manifest deletion",
 		},
 		"error from delete response": {
@@ -316,7 +305,6 @@ func TestGCR_Delete(t *testing.T) {
 				})
 			},
 			repository:   sampleRepo,
-			isDryRun:     false,
 			expectErrMsg: `Failed to compute blob liveness for manifest: 'latest'`,
 		},
 	}
@@ -332,7 +320,7 @@ func TestGCR_Delete(t *testing.T) {
 			gcr, err := registry.NewGCR(hl.SlashJoin(gcrHost, "parent"), mHc)
 			assert.NoError(t, err)
 
-			err = gcr.Delete(tc.repository, tc.isDryRun)
+			err = gcr.Delete(tc.repository)
 			if tc.expectErrMsg != "" {
 				assert.EqualError(t, err, tc.expectErrMsg)
 			} else {

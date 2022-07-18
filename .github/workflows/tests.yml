@@ -1,6 +1,12 @@
 
 name: tests
-on: [pull_request, workflow_dispatch]
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
 
 env:
   GO_VERSION: 1.18
