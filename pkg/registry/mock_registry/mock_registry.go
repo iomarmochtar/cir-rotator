@@ -50,15 +50,15 @@ func (mr *MockImageRegistryMockRecorder) Catalog() *gomock.Call {
 }
 
 // Delete mocks base method.
-func (m *MockImageRegistry) Delete(repo registry.Repository, isDryRun bool) error {
+func (m *MockImageRegistry) Delete(repo registry.Repository) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Delete", repo, isDryRun)
+	ret := m.ctrl.Call(m, "Delete", repo)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Delete indicates an expected call of Delete.
-func (mr *MockImageRegistryMockRecorder) Delete(repo, isDryRun interface{}) *gomock.Call {
+func (mr *MockImageRegistryMockRecorder) Delete(repo interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockImageRegistry)(nil).Delete), repo, isDryRun)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Delete", reflect.TypeOf((*MockImageRegistry)(nil).Delete), repo)
 }

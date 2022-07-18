@@ -7,7 +7,6 @@ import (
 	"regexp"
 
 	"github.com/iomarmochtar/cir-rotator/pkg/http"
-	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 )
 
@@ -55,16 +54,11 @@ type Repository struct {
 //go:generate mockgen -destination mock_registry/mock_registry.go -source registry.go ImageRegistry
 type ImageRegistry interface {
 	Catalog() ([]Repository, error)
-	Delete(repo Repository, isDryRun bool) error
+	Delete(repo Repository) error
 }
 
 // deleteImage shorthand for deleting image
-func deleteImage(hc http.IHttpClient, url string, isDryRun bool) (err error) {
-	if isDryRun {
-		log.Info().Str("url", url).Msg("[DRY_RUN] attempting for deletion")
-		return nil
-	}
-
+func deleteImage(hc http.IHttpClient, url string) (err error) {
 	var errResp ErrorsField
 	if err = hc.DeleteMarshalReturnObj(url, &errResp); err != nil {
 		return err

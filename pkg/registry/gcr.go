@@ -118,7 +118,7 @@ func (g *GCR) tagList(repository string) (err error) {
 	return nil
 }
 
-func (g GCR) Delete(repository Repository, isDryRun bool) (err error) {
+func (g GCR) Delete(repository Repository) (err error) {
 	shortRepoName := strings.TrimPrefix(repository.Name, fmt.Sprintf("%s/", g.host))
 	manifestURL := fmt.Sprintf("https://%s/v2/%s/manifests", g.host, shortRepoName)
 	for idr := range repository.Digests {
@@ -126,13 +126,13 @@ func (g GCR) Delete(repository Repository, isDryRun bool) (err error) {
 		// delete the related tags
 		for idt := range digest.Tag {
 			tagURL := fmt.Sprintf("%s/%s", manifestURL, digest.Tag[idt])
-			if err = deleteImage(g.hc, tagURL, isDryRun); err != nil {
+			if err = deleteImage(g.hc, tagURL); err != nil {
 				return err
 			}
 		}
 
 		digestURL := fmt.Sprintf("%s/%s", manifestURL, digest.Name)
-		if err = deleteImage(g.hc, digestURL, isDryRun); err != nil {
+		if err = deleteImage(g.hc, digestURL); err != nil {
 			return err
 		}
 	}
