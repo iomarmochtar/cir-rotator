@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
+	"time"
 
 	fl "github.com/iomarmochtar/cir-rotator/pkg/filter"
 	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
@@ -35,6 +36,7 @@ type Config struct {
 	ExcludeFilters     []string
 	IncludeFilters     []string
 	AllowInsecure      bool
+	JWExpirySecond     uint
 
 	excludeEngine fl.IFilterEngine
 	includeEngine fl.IFilterEngine
@@ -172,7 +174,8 @@ func (c *Config) initHTTPClient() (err error) {
 		if err != nil {
 			return err
 		}
-		token, err := tokenGenerator(data)
+		tokenExpires := time.Second * time.Duration(c.JWExpirySecond)
+		token, err := tokenGenerator(data, tokenExpires)
 		if err != nil {
 			return err
 		}

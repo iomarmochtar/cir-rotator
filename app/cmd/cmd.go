@@ -75,6 +75,12 @@ var (
 			Aliases: []string{"if"},
 			Usage:   "only process the results of filter",
 		},
+		&cli.UintFlag{
+			Name:    "jwt-expires",
+			Aliases: []string{"je"},
+			Usage:   "JWT token expire in second",
+			Value:   60 * 60, // one hour
+		},
 	}
 )
 
@@ -153,6 +159,7 @@ func initConfig(ctx *cli.Context) (config.IConfig, error) {
 		ExcludeFilters:     ctx.StringSlice("exclude-filter"),
 		IncludeFilters:     ctx.StringSlice("include-filter"),
 		AllowInsecure:      ctx.Bool("allow-insecure"),
+		JWExpirySecond:     ctx.Uint("jwt-expires"),
 	}
 	if err := cfg.Init(); err != nil {
 		return nil, err

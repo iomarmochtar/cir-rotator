@@ -15,7 +15,7 @@ const (
 )
 
 type (
-	oauthTokenGen func([]byte) (*oauth2.Token, error)
+	oauthTokenGen func(saData []byte, jwtExpires time.Duration) (*oauth2.Token, error)
 	registryGen   func(host string, httpClient http.IHttpClient) (ImageRegistry, error)
 )
 

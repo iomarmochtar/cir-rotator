@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -141,7 +142,7 @@ func (g GCR) Delete(repository Repository) (err error) {
 	return nil
 }
 
-func gcrOauthToken(saData []byte) (*oauth2.Token, error) {
+func gcrOauthToken(saData []byte, jwtExpires time.Duration) (*oauth2.Token, error) {
 	var c = struct {
 		Email      string `json:"client_email"`
 		PrivateKey string `json:"private_key"`
@@ -158,6 +159,7 @@ func gcrOauthToken(saData []byte) (*oauth2.Token, error) {
 			"https://www.googleapis.com/auth/devstorage.read_write",
 		},
 		TokenURL: google.JWTTokenURL,
+		Expires:  jwtExpires,
 	}
 	token, err := config.TokenSource(context.TODO()).Token()
 	if err != nil {

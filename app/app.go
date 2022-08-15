@@ -10,7 +10,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const VERSION = "0.1.1"
+const VERSION = "0.1.2"
 
 type App struct {
 	config c.IConfig
