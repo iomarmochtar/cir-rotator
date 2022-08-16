@@ -18,7 +18,7 @@ type Option struct {
 		Username string
 		Password string
 	}
-	Token            *oauth2.Token
+	TokenSource      oauth2.TokenSource
 	AllowInsecureSSL bool
 }
 
@@ -31,16 +31,26 @@ func New(o Option) (IHttpClient, error) {
 	if o.AllowInsecureSSL {
 		httpClient.EnableInsecureSkipVerify()
 	}
-	request := httpClient.R()
-	if o.Token != nil {
-		request.SetHeader("Authorization", fmt.Sprintf("%s %s", o.Token.TokenType, o.Token.AccessToken))
+	request := httpClient.R().SetHeader("Content-Type", "application/json")
+	if o.TokenSource != nil {
+		// injecting authorization header
+		httpClient.WrapRoundTripFunc(func(rt req.RoundTripper) req.RoundTripFunc {
+			return func(req *req.Request) (resp *req.Response, err error) {
+				token, err := o.TokenSource.Token()
+				if err != nil {
+					return
+				}
+				req.Headers.Set("Authorization", fmt.Sprintf("%s %s", token.TokenType, token.AccessToken))
+				resp, err = rt.RoundTrip(req)
+				return
+			}
+		})
 	} else if o.BasicAuth.Username != "" && o.BasicAuth.Password != "" {
 		request.SetBasicAuth(o.BasicAuth.Username, o.BasicAuth.Password)
 	} else {
 		return nil, fmt.Errorf("you must set oauth token or basic auth params (username & password)")
 	}
 
-	request.Headers.Set("Content-Type", "application/json")
 	return &Client{req: request}, nil
 }
 
