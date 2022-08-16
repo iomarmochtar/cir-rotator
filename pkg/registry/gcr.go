@@ -2,11 +2,9 @@ package registry
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/pkg/errors"
 	"github.com/rs/zerolog/log"
@@ -15,7 +13,6 @@ import (
 	"github.com/iomarmochtar/cir-rotator/pkg/http"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"golang.org/x/oauth2/jwt"
 )
 
 type GCRTagsResponse struct {
@@ -127,12 +124,14 @@ func (g GCR) Delete(repository Repository) (err error) {
 		// delete the related tags
 		for idt := range digest.Tag {
 			tagURL := fmt.Sprintf("%s/%s", manifestURL, digest.Tag[idt])
+			log.Debug().Str("url", tagURL).Msg("deleting tag")
 			if err = deleteImage(g.hc, tagURL); err != nil {
 				return err
 			}
 		}
 
 		digestURL := fmt.Sprintf("%s/%s", manifestURL, digest.Name)
+		log.Debug().Str("url", digestURL).Msg("deleting digest")
 		if err = deleteImage(g.hc, digestURL); err != nil {
 			return err
 		}
@@ -142,28 +141,10 @@ func (g GCR) Delete(repository Repository) (err error) {
 	return nil
 }
 
-func gcrOauthToken(saData []byte, jwtExpires time.Duration) (*oauth2.Token, error) {
-	var c = struct {
-		Email      string `json:"client_email"`
-		PrivateKey string `json:"private_key"`
-	}{}
-
-	if err := json.Unmarshal(saData, &c); err != nil {
-		return nil, err
-	}
-
-	config := &jwt.Config{
-		Email:      c.Email,
-		PrivateKey: []byte(c.PrivateKey),
-		Scopes: []string{
-			"https://www.googleapis.com/auth/devstorage.read_write",
-		},
-		TokenURL: google.JWTTokenURL,
-		Expires:  jwtExpires,
-	}
-	token, err := config.TokenSource(context.TODO()).Token()
+func gcrOauthSource(saData []byte) (oauth2.TokenSource, error) {
+	conf, err := google.JWTConfigFromJSON(saData, "https://www.googleapis.com/auth/devstorage.read_write")
 	if err != nil {
 		return nil, err
 	}
-	return token, nil
+	return conf.TokenSource(context.Background()), nil
 }

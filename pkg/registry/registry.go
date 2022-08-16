@@ -15,8 +15,8 @@ const (
 )
 
 type (
-	oauthTokenGen func(saData []byte, jwtExpires time.Duration) (*oauth2.Token, error)
-	registryGen   func(host string, httpClient http.IHttpClient) (ImageRegistry, error)
+	oauthTokenSource func(saData []byte) (oauth2.TokenSource, error)
+	registryGen      func(host string, httpClient http.IHttpClient) (ImageRegistry, error)
 )
 
 var (
@@ -24,8 +24,8 @@ var (
 	RegistryMapper = map[string]registryGen{
 		GoogleContainerRegistry: NewGCR,
 	}
-	TokenGeneratorMapper = map[string]oauthTokenGen{
-		GoogleContainerRegistry: gcrOauthToken,
+	TokenSourceMapper = map[string]oauthTokenSource{
+		GoogleContainerRegistry: gcrOauthSource,
 	}
 )
 

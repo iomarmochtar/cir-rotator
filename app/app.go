@@ -43,7 +43,7 @@ func (a App) DeleteRepositories(repositories []reg.Repository) (err error) {
 			continue
 		}
 
-		log.Info().Str("repo", repo.Name).Msg("deleting repository")
+		log.Info().Str("repo", repo.Name).Msg("deleting matched images in the repository")
 		if err = a.config.ImageRegistry().Delete(repo); err != nil {
 			return err
 		}

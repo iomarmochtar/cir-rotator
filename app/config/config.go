@@ -3,7 +3,6 @@ package config
 import (
 	"fmt"
 	"io/ioutil"
-	"time"
 
 	fl "github.com/iomarmochtar/cir-rotator/pkg/filter"
 	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
@@ -166,20 +165,19 @@ func (c *Config) initHTTPClient() (err error) {
 	hcOptions := http.Option{AllowInsecureSSL: c.AllowInsecure}
 	// prioritizing service path setups
 	if c.ServiceAccountPath != "" {
-		tokenGenerator := reg.TokenGeneratorMapper[c.RegistryType]
-		if tokenGenerator == nil {
+		tokenSource := reg.TokenSourceMapper[c.RegistryType]
+		if tokenSource == nil {
 			return fmt.Errorf("cannot use %s for service account method", c.RegistryType)
 		}
 		data, err := ioutil.ReadFile(c.ServiceAccountPath)
 		if err != nil {
 			return err
 		}
-		tokenExpires := time.Second * time.Duration(c.JWExpirySecond)
-		token, err := tokenGenerator(data, tokenExpires)
+		ts, err := tokenSource(data)
 		if err != nil {
 			return err
 		}
-		hcOptions.Token = token
+		hcOptions.TokenSource = ts
 		if c.httpClient, err = http.New(hcOptions); err != nil {
 			return err
 		}
