@@ -159,6 +159,53 @@ func TestConfig_Init(t *testing.T) {
 				IncludeFilters: []string{"Now() + Duration('7d') > CreatedAt"},
 			},
 		},
+		"error reading repo list file": {
+			config: &c.Config{
+				RegUsername:  "user",
+				RegPassword:  "secret",
+				RegistryHost: "asia.gcr.io/parent",
+			},
+			beforeExec: func(tc *tcArg) error {
+				path, err := dummyWriter("should-be-err", []byte(`"dummy"`), 000)
+				if err != nil {
+					return err
+				}
+				tc.config.RepoListPath = path
+				tc.expectedErrMsg = fmt.Sprintf("error while reading repository list file: open %s: permission denied", path)
+				return nil
+			},
+		},
+		"error unmarshall repository json file": {
+			config: &c.Config{
+				RegUsername:  "user",
+				RegPassword:  "secret",
+				RegistryHost: "asia.gcr.io/parent",
+			},
+			beforeExec: func(tc *tcArg) error {
+				path, err := dummyWriter("should-be-err", []byte(`"dummy"`), os.ModePerm)
+				if err != nil {
+					return err
+				}
+				tc.config.RepoListPath = path
+				tc.expectedErrMsg = "unmarshaling repository list file: json: cannot unmarshal string into Go value of type []registry.Repository"
+				return nil
+			},
+		},
+		"success read repository json file": {
+			config: &c.Config{
+				RegUsername:  "user",
+				RegPassword:  "secret",
+				RegistryHost: "asia.gcr.io/parent",
+			},
+			beforeExec: func(tc *tcArg) error {
+				path, err := dummyWriter("valid", []byte(`[{"repository": "asia.gcr.io/parent/ok"}]`), os.ModePerm)
+				if err != nil {
+					return err
+				}
+				tc.config.RepoListPath = path
+				return nil
+			},
+		},
 	}
 
 	for title, tc := range testCases {

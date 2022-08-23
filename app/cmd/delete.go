@@ -18,6 +18,10 @@ func DeleteAction() *cli.Command {
 				Name:  "skip-list",
 				Usage: "path of file that contains skipping list, will be ignored if matched",
 			},
+			&cli.StringFlag{
+				Name:  "repo-list",
+				Usage: "path of file containing repositories that will be deleted, this can be generated from list action",
+			},
 		}...),
 		Action: func(ctx *cli.Context) error {
 			cfg, err := initConfig(ctx)
