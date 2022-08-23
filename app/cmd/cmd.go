@@ -149,6 +149,7 @@ func initConfig(ctx *cli.Context) (config.IConfig, error) {
 		RegistryHost:       ctx.String("host"),
 		RegistryType:       ctx.String("type"),
 		SkipListPath:       ctx.String("skip-list"),
+		RepoListPath:       ctx.String("repo-list"),
 		DryRun:             ctx.Bool("dry-run"),
 		ExcludeFilters:     ctx.StringSlice("exclude-filter"),
 		IncludeFilters:     ctx.StringSlice("include-filter"),

@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
@@ -21,6 +22,7 @@ type IConfig interface {
 	ExcludeEngine() fl.IFilterEngine
 	IncludeEngine() fl.IFilterEngine
 	HTTPClient() http.IHttpClient
+	RepositoryList() []reg.Repository
 	Init() error
 }
 
@@ -31,6 +33,7 @@ type Config struct {
 	RegistryHost       string
 	RegistryType       string
 	SkipListPath       string
+	RepoListPath       string
 	DryRun             bool
 	ExcludeFilters     []string
 	IncludeFilters     []string
@@ -42,6 +45,7 @@ type Config struct {
 	imageReg      reg.ImageRegistry
 	httpClient    http.IHttpClient
 	skipList      []string
+	repositories  []reg.Repository
 }
 
 // Init is validating inputs and setups some dependencies for the application to run
@@ -71,11 +75,20 @@ func (c *Config) Init() (err error) {
 		return err
 	}
 
+	// repositories list
+	if err = c.initRepositoryList(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (c Config) SkipList() []string {
 	return c.skipList
+}
+
+func (c Config) RepositoryList() []reg.Repository {
+	return c.repositories
 }
 
 func (c Config) IsDryRun() bool {
@@ -199,4 +212,18 @@ func (c *Config) initHTTPClient() (err error) {
 		}
 	}
 	return err
+}
+
+func (c *Config) initRepositoryList() (err error) {
+	if c.RepoListPath == "" {
+		return nil
+	}
+	data, err := ioutil.ReadFile(c.RepoListPath)
+	if err != nil {
+		return fmt.Errorf("error while reading repository list file: %w", err)
+	}
+	if err = json.Unmarshal(data, &c.repositories); err != nil {
+		return fmt.Errorf("unmarshaling repository list file: %w", err)
+	}
+	return nil
 }

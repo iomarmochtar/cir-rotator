@@ -21,6 +21,9 @@ func New(config c.IConfig) *App {
 }
 
 func (a App) ListRepositories() ([]reg.Repository, error) {
+	if configRepos := a.config.RepositoryList(); len(configRepos) != 0 {
+		return configRepos, nil
+	}
 	return a.fetchAndFilterRepositories()
 }
 

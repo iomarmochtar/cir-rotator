@@ -61,6 +61,7 @@ func TestApp_ListRepositories(t *testing.T) {
 				mockConfig := mc.NewMockIConfig(ctrl)
 
 				mockConfig.EXPECT().ImageRegistry().Return(mockReg)
+				mockConfig.EXPECT().RepositoryList().Times(1).Return([]reg.Repository{})
 				mockConfig.EXPECT().IncludeEngine().Times(0)
 				mockConfig.EXPECT().ExcludeEngine().Times(0)
 				return mockConfig
@@ -77,6 +78,7 @@ func TestApp_ListRepositories(t *testing.T) {
 				mif.EXPECT().Process(gomock.Any()).Times(1).Return(false, fmt.Errorf("error in include filter"))
 
 				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().RepositoryList().Times(1).Return([]reg.Repository{})
 				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
 				mockConfig.EXPECT().IncludeEngine().Times(1).Return(mif)
 				mockConfig.EXPECT().ExcludeEngine().Times(1).Return(nil)
@@ -97,6 +99,7 @@ func TestApp_ListRepositories(t *testing.T) {
 				mef.EXPECT().Process(gomock.Any()).Times(1).Return(false, fmt.Errorf("error in exclude filter"))
 
 				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().RepositoryList().Times(1).Return([]reg.Repository{})
 				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
 				mockConfig.EXPECT().IncludeEngine().Times(1).Return(mif)
 				mockConfig.EXPECT().ExcludeEngine().Times(1).Return(mef)
@@ -111,6 +114,7 @@ func TestApp_ListRepositories(t *testing.T) {
 				mockReg.EXPECT().Catalog().Times(1).Return(sampleRepos, nil)
 
 				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().RepositoryList().Times(1).Return([]reg.Repository{})
 				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
 				mockConfig.EXPECT().IncludeEngine().Times(1).Return(nil)
 				mockConfig.EXPECT().ExcludeEngine().Times(1).Return(nil)
@@ -135,6 +139,7 @@ func TestApp_ListRepositories(t *testing.T) {
 				})
 
 				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().RepositoryList().Times(1).Return([]reg.Repository{})
 				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
 				mockConfig.EXPECT().IncludeEngine().Times(1).Return(mif)
 				mockConfig.EXPECT().ExcludeEngine().Times(1).Return(mef)
@@ -154,6 +159,7 @@ func TestApp_ListRepositories(t *testing.T) {
 				mef.EXPECT().Process(gomock.Any()).Times(0)
 
 				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().RepositoryList().Times(1).Return([]reg.Repository{})
 				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
 				mockConfig.EXPECT().IncludeEngine().Times(1).Return(mif)
 				mockConfig.EXPECT().ExcludeEngine().Times(1).Return(mef)
@@ -170,9 +176,18 @@ func TestApp_ListRepositories(t *testing.T) {
 				mef.EXPECT().Process(gomock.Any()).AnyTimes().Return(false, nil)
 
 				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().RepositoryList().Times(1).Return([]reg.Repository{})
 				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
 				mockConfig.EXPECT().IncludeEngine().Times(1).Return(nil)
 				mockConfig.EXPECT().ExcludeEngine().Times(1).Return(mef)
+				return mockConfig
+			},
+			expectRepositories: sampleRepos,
+		},
+		"repository list provided in config initialization": {
+			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
+				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().RepositoryList().Times(1).Return(sampleRepos)
 				return mockConfig
 			},
 			expectRepositories: sampleRepos,

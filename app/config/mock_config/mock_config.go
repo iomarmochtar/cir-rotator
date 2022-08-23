@@ -148,6 +148,20 @@ func (mr *MockIConfigMockRecorder) Password() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Password", reflect.TypeOf((*MockIConfig)(nil).Password))
 }
 
+// RepositoryList mocks base method.
+func (m *MockIConfig) RepositoryList() []registry.Repository {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RepositoryList")
+	ret0, _ := ret[0].([]registry.Repository)
+	return ret0
+}
+
+// RepositoryList indicates an expected call of RepositoryList.
+func (mr *MockIConfigMockRecorder) RepositoryList() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoryList", reflect.TypeOf((*MockIConfig)(nil).RepositoryList))
+}
+
 // SkipList mocks base method.
 func (m *MockIConfig) SkipList() []string {
 	m.ctrl.T.Helper()
