@@ -248,11 +248,12 @@ func TestApp_DeleteRepositories(t *testing.T) {
 				mockConfig := mc.NewMockIConfig(ctrl)
 				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
 				mockConfig.EXPECT().SkipList().Times(1).Return([]string{})
-				mockConfig.EXPECT().IsDryRun().Times(1).Return(false)
+				mockConfig.EXPECT().IsDryRun().Times(2).Return(false)
+				mockConfig.EXPECT().ParallelDeletion().Times(1).Return(1)
 				return mockConfig
 			},
 			repositories: sampleRepos,
-			expectErrMsg: "failure",
+			expectErrMsg: "error while deleting repository image-1: failure",
 		},
 		"found in skip list": {
 			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
@@ -265,6 +266,7 @@ func TestApp_DeleteRepositories(t *testing.T) {
 				mockConfig.EXPECT().ImageRegistry().Times(2).Return(mockReg)
 				mockConfig.EXPECT().SkipList().Times(1).Return([]string{"image-1:latest", "image-3:abc", "image-3:def"})
 				mockConfig.EXPECT().IsDryRun().Times(2).Return(false)
+				mockConfig.EXPECT().ParallelDeletion().Times(1).Return(1)
 				return mockConfig
 			},
 			repositories: repoWithMoreDigest,
@@ -275,6 +277,7 @@ func TestApp_DeleteRepositories(t *testing.T) {
 				mockConfig.EXPECT().ImageRegistry().Times(0)
 				mockConfig.EXPECT().SkipList().Times(1).Return([]string{})
 				mockConfig.EXPECT().IsDryRun().Times(3).Return(true)
+				mockConfig.EXPECT().ParallelDeletion().Times(1).Return(1)
 				return mockConfig
 			},
 			repositories: repoWithMoreDigest,

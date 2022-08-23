@@ -3,6 +3,7 @@ module github.com/iomarmochtar/cir-rotator
 go 1.18
 
 require (
+	github.com/alitto/pond v1.8.0
 	github.com/antonmedv/expr v1.9.0
 	github.com/golang/mock v1.6.0
 	github.com/imroc/req/v3 v3.17.7

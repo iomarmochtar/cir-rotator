@@ -30,6 +30,7 @@ func TestConfig_Init(t *testing.T) {
 	type tcArg struct {
 		config         *c.Config
 		beforeExec     func(*tcArg) error
+		afterExec      func(*testing.T, *c.Config)
 		expectedErrMsg string
 	}
 
@@ -218,6 +219,9 @@ func TestConfig_Init(t *testing.T) {
 				assert.EqualError(t, err, tc.expectedErrMsg)
 			} else {
 				assert.NoError(t, err)
+			}
+			if tc.afterExec != nil {
+				tc.afterExec(t, tc.config)
 			}
 		})
 	}

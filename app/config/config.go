@@ -23,6 +23,7 @@ type IConfig interface {
 	IncludeEngine() fl.IFilterEngine
 	HTTPClient() http.IHttpClient
 	RepositoryList() []reg.Repository
+	ParallelDeletion() int
 	Init() error
 }
 
@@ -39,6 +40,7 @@ type Config struct {
 	IncludeFilters     []string
 	AllowInsecure      bool
 	JWExpirySecond     uint
+	DeleteProcessCount int
 
 	excludeEngine fl.IFilterEngine
 	includeEngine fl.IFilterEngine
@@ -93,6 +95,10 @@ func (c Config) RepositoryList() []reg.Repository {
 
 func (c Config) IsDryRun() bool {
 	return c.DryRun
+}
+
+func (c Config) ParallelDeletion() int {
+	return c.DeleteProcessCount
 }
 
 func (c Config) Username() string {

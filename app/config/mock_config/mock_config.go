@@ -134,6 +134,20 @@ func (mr *MockIConfigMockRecorder) IsDryRun() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDryRun", reflect.TypeOf((*MockIConfig)(nil).IsDryRun))
 }
 
+// ParallelDeletion mocks base method.
+func (m *MockIConfig) ParallelDeletion() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ParallelDeletion")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// ParallelDeletion indicates an expected call of ParallelDeletion.
+func (mr *MockIConfigMockRecorder) ParallelDeletion() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ParallelDeletion", reflect.TypeOf((*MockIConfig)(nil).ParallelDeletion))
+}
+
 // Password mocks base method.
 func (m *MockIConfig) Password() string {
 	m.ctrl.T.Helper()

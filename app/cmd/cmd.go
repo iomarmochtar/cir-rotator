@@ -154,6 +154,7 @@ func initConfig(ctx *cli.Context) (config.IConfig, error) {
 		ExcludeFilters:     ctx.StringSlice("exclude-filter"),
 		IncludeFilters:     ctx.StringSlice("include-filter"),
 		AllowInsecure:      ctx.Bool("allow-insecure"),
+		DeleteProcessCount: ctx.Int("worker-count"),
 	}
 	if err := cfg.Init(); err != nil {
 		return nil, err
