@@ -80,23 +80,24 @@ listing repositories, can be used to examine the target of the repository that w
 
 ```
 NAME:
-cir-rotator list - 
+   cir-rotator list - 
 
 USAGE:
-cir-rotator list [command options] [arguments...]
+   cir-rotator list [command options] [arguments...]
 
 OPTIONS:
---output-table                      show output as table to stdout (default: false)
---output-json value                 dump result as json file
---allow-insecure                    allow insecure ssl verify (default: false) [$ALLOW_INSECURE_SSL]
---basic-auth-user value, -u value   basic authentication user [$BASIC_AUTH_USER]
---basic-auth-pwd value, -p value    basic authentication password [$BASIC_AUTH_PWD]
---host value, --ho value            registry host [$REGISTRY_HOST]
---type value, -t value              registry type [$REGISTRY_TYPE]
---service-account value, -f value   service account file path, it cannot be combined if basic auth args are provided [$SA_FILE]
---exclude-filter value, --ef value  excluding result                    (accepts multiple inputs)
---include-filter value, --if value  only process the results of filter  (accepts multiple inputs)
---help, -h                          show help (default: false)
+   --output-table                      show output as table to stdout (default: false)
+   --output-json value                 dump result as json file
+   --allow-insecure                    allow insecure ssl verify (default: false) [$ALLOW_INSECURE_SSL]
+   --basic-auth-user value, -u value   basic authentication user [$BASIC_AUTH_USER]
+   --basic-auth-pwd value, -p value    basic authentication password [$BASIC_AUTH_PWD]
+   --host value, --ho value            registry host [$REGISTRY_HOST]
+   --type value, -t value              registry type [$REGISTRY_TYPE]
+   --service-account value, -f value   service account file path, it cannot be combined if basic auth args are provided [$SA_FILE]
+   --exclude-filter value, --ef value  excluding result                    (accepts multiple inputs)
+   --include-filter value, --if value  only process the results of filter  (accepts multiple inputs)
+   --worker-count value                http client worker count (default: 1)
+   --help, -h                          show help (default: false)
 ```
 </details>
 
@@ -125,8 +126,11 @@ OPTIONS:
    --service-account value, -f value   service account file path, it cannot be combined if basic auth args are provided [$SA_FILE]
    --exclude-filter value, --ef value  excluding result                    (accepts multiple inputs)
    --include-filter value, --if value  only process the results of filter  (accepts multiple inputs)
+   --worker-count value                http client worker count (default: 1)
    --dry-run                           just log the action, will not deleting (default: false)
    --skip-list value                   path of file that contains skipping list, will be ignored if matched
+   --repo-list value                   path of file containing repositories that will be deleted, this can be generated from list action
+   --skip-error                        if any error happen while deleting just ignore it (default: false)
    --help, -h                          show help (default: false)
 ```
 </details>
