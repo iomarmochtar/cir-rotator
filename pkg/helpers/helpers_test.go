@@ -3,6 +3,7 @@ package helpers_test
 import (
 	"os"
 	"testing"
+	"time"
 
 	"github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	"github.com/stretchr/testify/assert"
@@ -38,4 +39,11 @@ func TestCombineMaps(t *testing.T) {
 func TestFileExist(t *testing.T) {
 	assert.True(t, helpers.FileExist("../../testdata/gcr/error_delete_manifest.json"))
 	assert.False(t, helpers.FileExist("/path/not/exists.txt"))
+}
+
+func TestHumanizeDuration(t *testing.T) {
+	dur, _ := time.ParseDuration("2h5m")
+	assert.Equal(t, "2 hours 5 minutes", helpers.HumanizeDuration(dur))
+	dur, _ = time.ParseDuration("4320m1s")
+	assert.Equal(t, "3 days 1 second", helpers.HumanizeDuration(dur))
 }

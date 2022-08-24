@@ -1,10 +1,14 @@
 package app
 
 import (
+	"context"
 	"fmt"
+	"time"
 
+	"github.com/alitto/pond"
 	c "github.com/iomarmochtar/cir-rotator/app/config"
 	fl "github.com/iomarmochtar/cir-rotator/pkg/filter"
+	"github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	reg "github.com/iomarmochtar/cir-rotator/pkg/registry"
 	"github.com/rs/zerolog/log"
@@ -29,6 +33,11 @@ func (a App) ListRepositories() ([]reg.Repository, error) {
 
 func (a App) DeleteRepositories(repositories []reg.Repository) (err error) {
 	skipList := a.config.SkipList()
+	totalRepository := len(repositories)
+	// create worker pool for parallel deletion for each repository
+	pool := pond.New(a.config.HTTPWorkerCount(), totalRepository)
+	defer pool.StopAndWait()
+	workers, _ := pool.GroupContext(context.Background())
 	for idr := range repositories {
 		repo := repositories[idr]
 		// filter the list of tags if skiplist provided, if it's matched then ignore the related digest for deletion
@@ -41,20 +50,39 @@ func (a App) DeleteRepositories(repositories []reg.Repository) (err error) {
 			continue
 		}
 
+		lg := log.Warn().Str("repo", repo.Name).
+			Int("total_digest", len(repo.Digests)).
+			Str("total_size", getDigestTotalSize(repo.Digests))
+
 		if a.config.IsDryRun() {
-			log.Info().Str("repo", repo.Name).Msg("[DRY_RUN] attempting for deletion")
+			lg.Msg("[DRY_RUN] attempting for deletion")
 			continue
 		}
 
-		log.Info().Str("repo", repo.Name).Msg("deleting matched images in the repository")
-		if err = a.config.ImageRegistry().Delete(repo); err != nil {
-			return err
-		}
+		lg.Msg("enqueue for deletion")
+		workers.Submit(func() error {
+			repoLog := log.With().Str("repo", repo.Name).
+				Int("total_digest", len(repo.Digests)).
+				Str("total_size", getDigestTotalSize(repo.Digests)).Logger()
+			repoLog.Info().Msg("begin deletion process")
+			begin := time.Now()
+			if err := a.config.ImageRegistry().Delete(repo); err != nil {
+				err = fmt.Errorf("error while deleting repository %s: %w", repo.Name, err)
+				if !a.config.SkipDeletionErr() {
+					return err
+				}
+				repoLog.Err(err).Msg("skip")
+			}
+			duration := time.Since(begin)
+			repoLog.Info().Str("duration", helpers.HumanizeDuration(duration)).Msg("done")
+			return nil
+		})
 	}
-	return nil
+	return workers.Wait()
 }
 
 func (a App) fetchAndFilterRepositories() ([]reg.Repository, error) {
+	log.Info().Msg("listing repository catalog")
 	repositories, err := a.config.ImageRegistry().Catalog()
 	if err != nil {
 		return nil, err
@@ -137,4 +165,12 @@ func filterRepositoryDigestBySkipList(repo *reg.Repository, skipList []string) {
 		}
 	}
 	repo.Digests = tmpDigests
+}
+
+func getDigestTotalSize(digests []reg.Digest) string {
+	var totalSize uint
+	for _, digest := range digests {
+		totalSize += digest.ImageSizeBytes
+	}
+	return helpers.ByteCountIEC(totalSize)
 }

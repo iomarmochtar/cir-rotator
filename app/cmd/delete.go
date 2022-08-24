@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/iomarmochtar/cir-rotator/app"
 	"github.com/urfave/cli/v2"
 )
@@ -22,11 +24,20 @@ func DeleteAction() *cli.Command {
 				Name:  "repo-list",
 				Usage: "path of file containing repositories that will be deleted, this can be generated from list action",
 			},
+			&cli.BoolFlag{
+				Name:  "skip-error",
+				Usage: "if any error happen while deleting just ignore it",
+				Value: false,
+			},
 		}...),
 		Action: func(ctx *cli.Context) error {
 			cfg, err := initConfig(ctx)
 			if err != nil {
 				return err
+			}
+
+			if pd := cfg.HTTPWorkerCount(); pd <= 0 {
+				return fmt.Errorf("invalid value for worker count: %d, make sure it's more than equal to 1", pd)
 			}
 
 			app := app.New(cfg)

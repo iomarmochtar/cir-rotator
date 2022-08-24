@@ -113,7 +113,9 @@ func runCmdTestCases(name string, command *cli.Command, testCases map[string]cas
 			err := command.Run(ctx)
 
 			if tc.expectedErrMsg != "" {
-				assert.EqualError(t, err, tc.expectedErrMsg)
+				assert.Error(t, err)
+				fmt.Println(err.Error())
+				assert.True(t, strings.Contains(err.Error(), tc.expectedErrMsg))
 			} else {
 				assert.NoError(t, err)
 			}

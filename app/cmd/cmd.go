@@ -75,6 +75,11 @@ var (
 			Aliases: []string{"if"},
 			Usage:   "only process the results of filter",
 		},
+		&cli.IntFlag{
+			Name:  "worker-count",
+			Usage: "http client worker count",
+			Value: 1,
+		},
 	}
 )
 
@@ -154,6 +159,8 @@ func initConfig(ctx *cli.Context) (config.IConfig, error) {
 		ExcludeFilters:     ctx.StringSlice("exclude-filter"),
 		IncludeFilters:     ctx.StringSlice("include-filter"),
 		AllowInsecure:      ctx.Bool("allow-insecure"),
+		WorkerCount:        ctx.Int("worker-count"),
+		SkipErrDelete:      ctx.Bool("skip-error"),
 	}
 	if err := cfg.Init(); err != nil {
 		return nil, err

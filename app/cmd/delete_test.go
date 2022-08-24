@@ -51,6 +51,10 @@ func TestDeleteAction(t *testing.T) {
 			},
 			expectedErrMsg: "Failed to compute blob liveness for manifest: 'latest'",
 		},
+		"error if set worker count less than 1": {
+			cmdArgs:        []string{"-ho", "https://asia.gcr.io/somepath", "-u", "secret", "-p", "souce", "--worker-count", "0"},
+			expectedErrMsg: "invalid value for worker count: 0, make sure it's more than equal to 1",
+		},
 	})
 
 	runCmdTestCases("delete", cmd.DeleteAction(), deleteTestCases, t)

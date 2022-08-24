@@ -30,6 +30,7 @@ func TestConfig_Init(t *testing.T) {
 	type tcArg struct {
 		config         *c.Config
 		beforeExec     func(*tcArg) error
+		afterExec      func(*testing.T, *c.Config)
 		expectedErrMsg string
 	}
 
@@ -205,6 +206,31 @@ func TestConfig_Init(t *testing.T) {
 				tc.config.RepoListPath = path
 				return nil
 			},
+			afterExec: func(t *testing.T, c *c.Config) {
+				assert.Equal(t, "asia.gcr.io/parent/ok", c.RepositoryList()[0].Name)
+			},
+		},
+		"read skip list": {
+			config: &c.Config{
+				RegUsername:  "user",
+				RegPassword:  "secret",
+				RegistryHost: "asia.gcr.io/parent",
+				SkipListPath: "../../testdata/skip_list.txt",
+			},
+			afterExec: func(t *testing.T, c *c.Config) {
+				assert.Equal(t, []string{"asia.gcr.io/parent1/repo1:latest", "asia.gcr.io/parent1/repo2:release-abc"}, c.SkipList())
+			},
+		},
+		"http worker count": {
+			config: &c.Config{
+				RegUsername:  "user",
+				RegPassword:  "secret",
+				RegistryHost: "asia.gcr.io/parent",
+				WorkerCount:  10,
+			},
+			afterExec: func(t *testing.T, c *c.Config) {
+				assert.Equal(t, 10, c.HTTPWorkerCount())
+			},
 		},
 	}
 
@@ -218,6 +244,9 @@ func TestConfig_Init(t *testing.T) {
 				assert.EqualError(t, err, tc.expectedErrMsg)
 			} else {
 				assert.NoError(t, err)
+			}
+			if tc.afterExec != nil {
+				tc.afterExec(t, tc.config)
 			}
 		})
 	}

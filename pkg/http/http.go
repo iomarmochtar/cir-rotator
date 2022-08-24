@@ -2,8 +2,10 @@ package http
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/imroc/req/v3"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/oauth2"
 )
 
@@ -20,42 +22,67 @@ type Option struct {
 	}
 	TokenSource      oauth2.TokenSource
 	AllowInsecureSSL bool
+	WorkerCount      int
 }
 
 type Client struct {
-	req *req.Request
+	reqIndex      int
+	reqIndexMutex sync.Mutex
+	reqs          []*req.Request
 }
 
 func New(o Option) (IHttpClient, error) {
-	httpClient := req.C()
-	if o.AllowInsecureSSL {
-		httpClient.EnableInsecureSkipVerify()
+	workerCount := o.WorkerCount
+	if workerCount <= 0 {
+		workerCount = 1
 	}
-	request := httpClient.R().SetHeader("Content-Type", "application/json")
-	if o.TokenSource != nil {
-		// injecting authorization header
-		httpClient.WrapRoundTripFunc(func(rt req.RoundTripper) req.RoundTripFunc {
-			return func(req *req.Request) (resp *req.Response, err error) {
-				token, err := o.TokenSource.Token()
-				if err != nil {
+	client := &Client{reqs: make([]*req.Request, workerCount), reqIndex: 0, reqIndexMutex: sync.Mutex{}}
+	for i := 0; i < workerCount; i++ {
+		log.Debug().Int("worker_index", i).Msg("initialize http worker")
+		httpClient := req.C()
+		if o.AllowInsecureSSL {
+			httpClient.EnableInsecureSkipVerify()
+		}
+		request := httpClient.R().SetHeader("Content-Type", "application/json")
+		if o.TokenSource != nil {
+			// injecting authorization header
+			httpClient.WrapRoundTripFunc(func(rt req.RoundTripper) req.RoundTripFunc {
+				return func(req *req.Request) (resp *req.Response, err error) {
+					token, err := o.TokenSource.Token()
+					if err != nil {
+						return
+					}
+					req.Headers.Set("Authorization", fmt.Sprintf("%s %s", token.TokenType, token.AccessToken))
+					resp, err = rt.RoundTrip(req)
 					return
 				}
-				req.Headers.Set("Authorization", fmt.Sprintf("%s %s", token.TokenType, token.AccessToken))
-				resp, err = rt.RoundTrip(req)
-				return
-			}
-		})
-	} else if o.BasicAuth.Username != "" && o.BasicAuth.Password != "" {
-		request.SetBasicAuth(o.BasicAuth.Username, o.BasicAuth.Password)
-	} else {
-		return nil, fmt.Errorf("you must set oauth token or basic auth params (username & password)")
+			})
+		} else if o.BasicAuth.Username != "" && o.BasicAuth.Password != "" {
+			request.SetBasicAuth(o.BasicAuth.Username, o.BasicAuth.Password)
+		} else {
+			return nil, fmt.Errorf("you must set oauth token or basic auth params (username & password)")
+		}
+		client.reqs[i] = request
 	}
 
-	return &Client{req: request}, nil
+	return client, nil
 }
 
-func (h Client) GetMarshalReturnObj(url string, obj any) error {
-	response, err := h.req.Get(url)
+// request get current worker
+func (h *Client) request() *req.Request {
+	h.reqIndexMutex.Lock()
+	defer h.reqIndexMutex.Unlock()
+	req := h.reqs[h.reqIndex]
+	if h.reqIndex+1 == len(h.reqs) {
+		h.reqIndex = 0
+	} else {
+		h.reqIndex++
+	}
+	return req
+}
+
+func (h *Client) GetMarshalReturnObj(url string, obj any) error {
+	response, err := h.request().Get(url)
 	if err != nil {
 		return err
 	}
@@ -67,8 +94,8 @@ func (h Client) GetMarshalReturnObj(url string, obj any) error {
 	return nil
 }
 
-func (h Client) DeleteMarshalReturnObj(url string, obj any) error {
-	response, err := h.req.Delete(url)
+func (h *Client) DeleteMarshalReturnObj(url string, obj any) error {
+	response, err := h.request().Delete(url)
 	if err != nil {
 		return err
 	}

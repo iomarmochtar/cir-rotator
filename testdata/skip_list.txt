@@ -1,0 +1,2 @@
+asia.gcr.io/parent1/repo1:latest
+asia.gcr.io/parent1/repo2:release-abc
