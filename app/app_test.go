@@ -249,11 +249,27 @@ func TestApp_DeleteRepositories(t *testing.T) {
 				mockConfig.EXPECT().ImageRegistry().Times(1).Return(mockReg)
 				mockConfig.EXPECT().SkipList().Times(1).Return([]string{})
 				mockConfig.EXPECT().IsDryRun().Times(2).Return(false)
-				mockConfig.EXPECT().ParallelDeletion().Times(1).Return(1)
+				mockConfig.EXPECT().HTTPWorkerCount().Times(1).Return(1)
+				mockConfig.EXPECT().SkipDeletionErr().Times(1).Return(false)
 				return mockConfig
 			},
 			repositories: sampleRepos,
 			expectErrMsg: "error while deleting repository image-1: failure",
+		},
+		"will not returning any error if skip-error provided": {
+			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
+				mockReg := mr.NewMockImageRegistry(ctrl)
+				mockReg.EXPECT().Delete(gomock.Any()).Times(2).Return(fmt.Errorf("failure"))
+
+				mockConfig := mc.NewMockIConfig(ctrl)
+				mockConfig.EXPECT().ImageRegistry().Times(2).Return(mockReg)
+				mockConfig.EXPECT().SkipList().Return([]string{})
+				mockConfig.EXPECT().IsDryRun().Times(2).Return(false)
+				mockConfig.EXPECT().HTTPWorkerCount().Times(1).Return(1)
+				mockConfig.EXPECT().SkipDeletionErr().Times(2).Return(true)
+				return mockConfig
+			},
+			repositories: sampleRepos,
 		},
 		"found in skip list": {
 			mockConfig: func(ctrl *gomock.Controller) *mc.MockIConfig {
@@ -266,7 +282,7 @@ func TestApp_DeleteRepositories(t *testing.T) {
 				mockConfig.EXPECT().ImageRegistry().Times(2).Return(mockReg)
 				mockConfig.EXPECT().SkipList().Times(1).Return([]string{"image-1:latest", "image-3:abc", "image-3:def"})
 				mockConfig.EXPECT().IsDryRun().Times(2).Return(false)
-				mockConfig.EXPECT().ParallelDeletion().Times(1).Return(1)
+				mockConfig.EXPECT().HTTPWorkerCount().Times(1).Return(1)
 				return mockConfig
 			},
 			repositories: repoWithMoreDigest,
@@ -277,7 +293,7 @@ func TestApp_DeleteRepositories(t *testing.T) {
 				mockConfig.EXPECT().ImageRegistry().Times(0)
 				mockConfig.EXPECT().SkipList().Times(1).Return([]string{})
 				mockConfig.EXPECT().IsDryRun().Times(3).Return(true)
-				mockConfig.EXPECT().ParallelDeletion().Times(1).Return(1)
+				mockConfig.EXPECT().HTTPWorkerCount().Times(1).Return(1)
 				return mockConfig
 			},
 			repositories: repoWithMoreDigest,

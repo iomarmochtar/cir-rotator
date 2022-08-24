@@ -22,8 +22,9 @@ type IConfig interface {
 	ExcludeEngine() fl.IFilterEngine
 	IncludeEngine() fl.IFilterEngine
 	HTTPClient() http.IHttpClient
+	HTTPWorkerCount() int
 	RepositoryList() []reg.Repository
-	ParallelDeletion() int
+	SkipDeletionErr() bool
 	Init() error
 }
 
@@ -40,7 +41,8 @@ type Config struct {
 	IncludeFilters     []string
 	AllowInsecure      bool
 	JWExpirySecond     uint
-	DeleteProcessCount int
+	WorkerCount        int
+	SkipErrDelete      bool
 
 	excludeEngine fl.IFilterEngine
 	includeEngine fl.IFilterEngine
@@ -97,8 +99,12 @@ func (c Config) IsDryRun() bool {
 	return c.DryRun
 }
 
-func (c Config) ParallelDeletion() int {
-	return c.DeleteProcessCount
+func (c Config) SkipDeletionErr() bool {
+	return c.SkipErrDelete
+}
+
+func (c Config) HTTPWorkerCount() int {
+	return c.WorkerCount
 }
 
 func (c Config) Username() string {
@@ -181,7 +187,7 @@ func (c *Config) initSkipList() (err error) {
 }
 
 func (c *Config) initHTTPClient() (err error) {
-	hcOptions := http.Option{AllowInsecureSSL: c.AllowInsecure}
+	hcOptions := http.Option{AllowInsecureSSL: c.AllowInsecure, WorkerCount: c.HTTPWorkerCount()}
 	// prioritizing service path setups
 	if c.ServiceAccountPath != "" {
 		tokenSource := reg.TokenSourceMapper[c.RegistryType]

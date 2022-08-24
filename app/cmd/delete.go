@@ -24,10 +24,10 @@ func DeleteAction() *cli.Command {
 				Name:  "repo-list",
 				Usage: "path of file containing repositories that will be deleted, this can be generated from list action",
 			},
-			&cli.IntFlag{
-				Name:  "worker-count",
-				Usage: "worker manifest digest parallel deletion count",
-				Value: 1,
+			&cli.BoolFlag{
+				Name:  "skip-error",
+				Usage: "if any error happen while deleting just ignore it",
+				Value: false,
 			},
 		}...),
 		Action: func(ctx *cli.Context) error {
@@ -36,7 +36,7 @@ func DeleteAction() *cli.Command {
 				return err
 			}
 
-			if pd := cfg.ParallelDeletion(); pd <= 0 {
+			if pd := cfg.HTTPWorkerCount(); pd <= 0 {
 				return fmt.Errorf("invalid value for worker count: %d, make sure it's more than equal to 1", pd)
 			}
 

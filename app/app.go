@@ -35,7 +35,7 @@ func (a App) DeleteRepositories(repositories []reg.Repository) (err error) {
 	skipList := a.config.SkipList()
 	totalRepository := len(repositories)
 	// create worker pool for parallel deletion for each repository
-	pool := pond.New(a.config.ParallelDeletion(), totalRepository)
+	pool := pond.New(a.config.HTTPWorkerCount(), totalRepository)
 	defer pool.StopAndWait()
 	workers, _ := pool.GroupContext(context.Background())
 	for idr := range repositories {
@@ -61,15 +61,20 @@ func (a App) DeleteRepositories(repositories []reg.Repository) (err error) {
 
 		lg.Msg("enqueue for deletion")
 		workers.Submit(func() error {
+			repoLog := log.With().Str("repo", repo.Name).
+				Int("total_digest", len(repo.Digests)).
+				Str("total_size", getDigestTotalSize(repo.Digests)).Logger()
+			repoLog.Info().Msg("begin deletion process")
 			begin := time.Now()
-			err := a.config.ImageRegistry().Delete(repo)
-			if err != nil {
-				return fmt.Errorf("error while deleting repository %s: %w", repo.Name, err)
+			if err := a.config.ImageRegistry().Delete(repo); err != nil {
+				err = fmt.Errorf("error while deleting repository %s: %w", repo.Name, err)
+				if !a.config.SkipDeletionErr() {
+					return err
+				}
+				repoLog.Err(err).Msg("skip")
 			}
 			duration := time.Since(begin)
-			log.Info().Str("repo", repo.Name).
-				Str("duration", helpers.HumanizeDuration(duration)).
-				Msg("deletion is done")
+			repoLog.Info().Str("duration", helpers.HumanizeDuration(duration)).Msg("done")
 			return nil
 		})
 	}

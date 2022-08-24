@@ -221,15 +221,15 @@ func TestConfig_Init(t *testing.T) {
 				assert.Equal(t, []string{"asia.gcr.io/parent1/repo1:latest", "asia.gcr.io/parent1/repo2:release-abc"}, c.SkipList())
 			},
 		},
-		"delete process count": {
+		"http worker count": {
 			config: &c.Config{
-				RegUsername:        "user",
-				RegPassword:        "secret",
-				RegistryHost:       "asia.gcr.io/parent",
-				DeleteProcessCount: 10,
+				RegUsername:  "user",
+				RegPassword:  "secret",
+				RegistryHost: "asia.gcr.io/parent",
+				WorkerCount:  10,
 			},
 			afterExec: func(t *testing.T, c *c.Config) {
-				assert.Equal(t, 10, c.ParallelDeletion())
+				assert.Equal(t, 10, c.HTTPWorkerCount())
 			},
 		},
 	}

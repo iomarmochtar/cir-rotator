@@ -64,6 +64,20 @@ func (mr *MockIConfigMockRecorder) HTTPClient() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPClient", reflect.TypeOf((*MockIConfig)(nil).HTTPClient))
 }
 
+// HTTPWorkerCount mocks base method.
+func (m *MockIConfig) HTTPWorkerCount() int {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "HTTPWorkerCount")
+	ret0, _ := ret[0].(int)
+	return ret0
+}
+
+// HTTPWorkerCount indicates an expected call of HTTPWorkerCount.
+func (mr *MockIConfigMockRecorder) HTTPWorkerCount() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HTTPWorkerCount", reflect.TypeOf((*MockIConfig)(nil).HTTPWorkerCount))
+}
+
 // Host mocks base method.
 func (m *MockIConfig) Host() string {
 	m.ctrl.T.Helper()
@@ -134,20 +148,6 @@ func (mr *MockIConfigMockRecorder) IsDryRun() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsDryRun", reflect.TypeOf((*MockIConfig)(nil).IsDryRun))
 }
 
-// ParallelDeletion mocks base method.
-func (m *MockIConfig) ParallelDeletion() int {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ParallelDeletion")
-	ret0, _ := ret[0].(int)
-	return ret0
-}
-
-// ParallelDeletion indicates an expected call of ParallelDeletion.
-func (mr *MockIConfigMockRecorder) ParallelDeletion() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ParallelDeletion", reflect.TypeOf((*MockIConfig)(nil).ParallelDeletion))
-}
-
 // Password mocks base method.
 func (m *MockIConfig) Password() string {
 	m.ctrl.T.Helper()
@@ -174,6 +174,20 @@ func (m *MockIConfig) RepositoryList() []registry.Repository {
 func (mr *MockIConfigMockRecorder) RepositoryList() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RepositoryList", reflect.TypeOf((*MockIConfig)(nil).RepositoryList))
+}
+
+// SkipDeletionErr mocks base method.
+func (m *MockIConfig) SkipDeletionErr() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SkipDeletionErr")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// SkipDeletionErr indicates an expected call of SkipDeletionErr.
+func (mr *MockIConfigMockRecorder) SkipDeletionErr() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SkipDeletionErr", reflect.TypeOf((*MockIConfig)(nil).SkipDeletionErr))
 }
 
 // SkipList mocks base method.
