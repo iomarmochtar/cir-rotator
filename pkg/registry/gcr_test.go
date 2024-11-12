@@ -3,17 +3,16 @@ package registry_test
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path"
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
+	"go.uber.org/mock/gomock"
 
 	hl "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	mh "github.com/iomarmochtar/cir-rotator/pkg/http/mock_http"
-	"github.com/iomarmochtar/cir-rotator/pkg/registry"
 	reg "github.com/iomarmochtar/cir-rotator/pkg/registry"
 	"github.com/stretchr/testify/assert"
 )
@@ -24,7 +23,8 @@ var (
 )
 
 func readFixture(loc string) []byte {
-	data, err := ioutil.ReadFile(path.Join("..", "..", "testdata", loc))
+	//nolint:gosec
+	data, err := os.ReadFile(path.Join("..", "..", "testdata", loc))
 	if err != nil {
 		panic(errors.Wrap(err, "while reading fixtures data"))
 	}
@@ -230,7 +230,7 @@ func TestGCR_Catalog(t *testing.T) {
 			mHc := mh.NewMockIHttpClient(ctrl)
 			tc.mockHTTPClient(mHc)
 
-			gcr, _ := registry.NewGCR(hostWithParentRepo, mHc)
+			gcr, _ := reg.NewGCR(hostWithParentRepo, mHc)
 			repositories, err := gcr.Catalog()
 
 			assert.Equal(t, tc.expectRepositories, repositories)
@@ -317,7 +317,7 @@ func TestGCR_Delete(t *testing.T) {
 			mHc := mh.NewMockIHttpClient(ctrl)
 			tc.mockHTTPClient(mHc)
 
-			gcr, err := registry.NewGCR(hl.SlashJoin(gcrHost, "parent"), mHc)
+			gcr, err := reg.NewGCR(hl.SlashJoin(gcrHost, "parent"), mHc)
 			assert.NoError(t, err)
 
 			err = gcr.Delete(tc.repository)

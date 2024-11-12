@@ -1,6 +1,7 @@
 package registry
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -15,17 +16,20 @@ const (
 )
 
 type (
-	oauthTokenSource func(saData []byte) (oauth2.TokenSource, error)
+	oauthTokenSource func(saFilePath string) (oauth2.TokenSource, error)
 	registryGen      func(host string, httpClient http.IHttpClient) (ImageRegistry, error)
 )
 
 var (
-	reGcrMatcher   = regexp.MustCompile(`([a-z]+\.)?gcr\.io`)
+	reGcrMatcher   = regexp.MustCompile(`([a-z]+\.)?(gcr\.io|pkg\.dev)`)
 	RegistryMapper = map[string]registryGen{
 		GoogleContainerRegistry: NewGCR,
 	}
 	TokenSourceMapper = map[string]oauthTokenSource{
 		GoogleContainerRegistry: gcrOauthSource,
+	}
+	SupportedContainerRegistryList = []string{
+		GoogleContainerRegistry,
 	}
 )
 
@@ -65,13 +69,13 @@ func deleteImage(hc http.IHttpClient, url string) (err error) {
 	}
 
 	if len(errResp.Errors) != 0 {
-		return fmt.Errorf(errResp.Errors[0].Message)
+		return errors.New(errResp.Errors[0].Message)
 	}
 
 	return nil
 }
 
-func GetImageRegistryByHostname(host string) (string, error) {
+func GetImageRegistryTypeByHostname(host string) (string, error) {
 	if reGcrMatcher.Match([]byte(host)) {
 		return GoogleContainerRegistry, nil
 	}

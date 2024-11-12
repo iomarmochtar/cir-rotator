@@ -44,6 +44,7 @@ func New(o Option) (IHttpClient, error) {
 			httpClient.EnableInsecureSkipVerify()
 		}
 		request := httpClient.R().SetHeader("Content-Type", "application/json")
+		//nolint:gocritic
 		if o.TokenSource != nil {
 			// injecting authorization header
 			httpClient.WrapRoundTripFunc(func(rt req.RoundTripper) req.RoundTripFunc {

@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"fmt"
 	"os"
 	"strings"
 	"time"
@@ -17,6 +17,15 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/rs/zerolog/pkgerrors"
 	"github.com/urfave/cli/v2"
+)
+
+var (
+	// CmdName name of command line
+	CmdName = "cir-rotator"
+	// Version app version, this will be injected/modified during compilation time
+	Version = "0.0.0"
+	// BuildHash git commit hash during build process
+	BuildHash = "0000000000000000000000000000000000000000"
 )
 
 var (
@@ -118,7 +127,7 @@ func dumpToJSON(repositories []reg.Repository, jsonPath string) error {
 		return err
 	}
 
-	if err = ioutil.WriteFile(jsonPath, data, 0600); err != nil {
+	if err = os.WriteFile(jsonPath, data, 0600); err != nil {
 		return err
 	}
 	return nil
@@ -169,12 +178,22 @@ func initConfig(ctx *cli.Context) (config.IConfig, error) {
 }
 
 func New() cli.App {
+	cli.VersionPrinter = func(ctx *cli.Context) {
+		_, _ = fmt.Fprintf(ctx.App.Writer, `{"version": "%s", "commit": "%s", "compile_time": "%v"}`,
+			ctx.App.Version, BuildHash, ctx.App.Compiled)
+	}
 	return cli.App{
-		Name:                 "cir-rotator",
+		Name:                 CmdName,
 		Usage:                "an app for managing container image registry contents",
-		Version:              app.VERSION,
+		Version:              Version,
 		Compiled:             time.Now(),
 		EnableBashCompletion: true,
+		Authors: []*cli.Author{
+			{
+				Name:  "Imam Omar Mochtar",
+				Email: "iomarmochtar@gmail.com",
+			},
+		},
 		Commands: []*cli.Command{
 			ListAction(),
 			DeleteAction(),

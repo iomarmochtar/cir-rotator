@@ -5,7 +5,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/mock/gomock"
 	"github.com/iomarmochtar/cir-rotator/app"
 	mc "github.com/iomarmochtar/cir-rotator/app/config/mock_config"
 	fl "github.com/iomarmochtar/cir-rotator/pkg/filter"
@@ -13,6 +12,7 @@ import (
 	reg "github.com/iomarmochtar/cir-rotator/pkg/registry"
 	mr "github.com/iomarmochtar/cir-rotator/pkg/registry/mock_registry"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 var (

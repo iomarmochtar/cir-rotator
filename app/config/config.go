@@ -3,7 +3,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	fl "github.com/iomarmochtar/cir-rotator/pkg/filter"
 	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
@@ -143,7 +143,7 @@ func (c *Config) initRegType() (err error) {
 	}
 	// if registry type was not mentioned then try do determinte it by hostname
 	if c.RegistryType == "" {
-		if c.RegistryType, err = reg.GetImageRegistryByHostname(c.Host()); err != nil {
+		if c.RegistryType, err = reg.GetImageRegistryTypeByHostname(c.Host()); err != nil {
 			return err
 		}
 	}
@@ -188,41 +188,21 @@ func (c *Config) initSkipList() (err error) {
 
 func (c *Config) initHTTPClient() (err error) {
 	hcOptions := http.Option{AllowInsecureSSL: c.AllowInsecure, WorkerCount: c.HTTPWorkerCount()}
-	// prioritizing service path setups
-	if c.ServiceAccountPath != "" {
-		tokenSource := reg.TokenSourceMapper[c.RegistryType]
-		if tokenSource == nil {
-			return fmt.Errorf("cannot use %s for service account method", c.RegistryType)
-		}
-		data, err := ioutil.ReadFile(c.ServiceAccountPath)
-		if err != nil {
-			return err
-		}
-		ts, err := tokenSource(data)
-		if err != nil {
-			return err
-		}
-		hcOptions.TokenSource = ts
-		if c.httpClient, err = http.New(hcOptions); err != nil {
-			return err
-		}
-	} else {
-		if c.RegUsername != "" && c.RegPassword == "" {
-			return fmt.Errorf("you must set registry password")
-		}
-
-		if c.RegPassword != "" && c.RegUsername == "" {
-			return fmt.Errorf("you must set registry username")
-		}
-
+	// if username and password defined then will use BASIC auth method
+	if c.RegUsername != "" && c.RegPassword != "" {
 		hcOptions.BasicAuth = struct {
 			Username string
 			Password string
 		}{c.Username(), c.Password()}
-		if c.httpClient, err = http.New(hcOptions); err != nil {
+	} else if tokenSource := reg.TokenSourceMapper[c.RegistryType]; tokenSource != nil {
+		// token source mapper if it's registered
+		ts, err := tokenSource(c.ServiceAccountPath)
+		if err != nil {
 			return err
 		}
+		hcOptions.TokenSource = ts
 	}
+	c.httpClient, err = http.New(hcOptions)
 	return err
 }
 
@@ -230,7 +210,7 @@ func (c *Config) initRepositoryList() (err error) {
 	if c.RepoListPath == "" {
 		return nil
 	}
-	data, err := ioutil.ReadFile(c.RepoListPath)
+	data, err := os.ReadFile(c.RepoListPath)
 	if err != nil {
 		return fmt.Errorf("error while reading repository list file: %w", err)
 	}

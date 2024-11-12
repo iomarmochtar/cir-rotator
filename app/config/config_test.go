@@ -3,7 +3,6 @@ package config_test
 import (
 	"fmt"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -12,12 +11,12 @@ import (
 )
 
 func dummyWriter(fileNamePtrn string, content []byte, perms fs.FileMode) (path string, err error) {
-	file, err := ioutil.TempFile("", fileNamePtrn)
+	file, err := os.CreateTemp("", fileNamePtrn)
 	if err != nil {
 		return "", err
 	}
 	path = file.Name()
-	if err = ioutil.WriteFile(path, content, perms); err != nil {
+	if err = os.WriteFile(path, content, perms); err != nil {
 		return "", nil
 	}
 	if err = os.Chmod(path, perms); err != nil {
@@ -35,34 +34,12 @@ func TestConfig_Init(t *testing.T) {
 	}
 
 	testCases := map[string]*tcArg{
-		"registry username is set but password is not set": {
-			config: &c.Config{
-				RegistryHost: "asia.gcr.io",
-				RegUsername:  "user",
-			},
-			expectedErrMsg: "you must set registry password",
-		},
-		"registry username is not set but password set": {
-			config: &c.Config{
-				RegistryHost: "asia.gcr.io",
-				RegPassword:  "secret",
-			},
-			expectedErrMsg: "you must set registry username",
-		},
 		"registry host is not set": {
 			config: &c.Config{
 				RegUsername: "user",
 				RegPassword: "secret",
 			},
 			expectedErrMsg: "registry host is required",
-		},
-		"unknown registry type for using service account method": {
-			config: &c.Config{
-				RegistryHost:       "reg.unkonwn.com",
-				RegistryType:       "who.reg",
-				ServiceAccountPath: "/tmp/not_found.json",
-			},
-			expectedErrMsg: "cannot use who.reg for service account method",
 		},
 		"service account path is set but not exists": {
 			config: &c.Config{
@@ -84,14 +61,6 @@ func TestConfig_Init(t *testing.T) {
 				tc.expectedErrMsg = fmt.Sprintf("open %s: permission denied", path)
 				return nil
 			},
-		},
-		"registry type is not set and it not found based on auto matcher": {
-			config: &c.Config{
-				RegUsername:  "user",
-				RegPassword:  "secret",
-				RegistryHost: "reg.some.where",
-			},
-			expectedErrMsg: "unknown matcher registry handler by host reg.some.where",
 		},
 		"unknown registry type": {
 			config: &c.Config{

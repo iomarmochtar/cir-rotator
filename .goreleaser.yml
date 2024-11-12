@@ -1,3 +1,4 @@
+version: 2
 project_name: cir-rotator
 before:
   hooks:
@@ -11,25 +12,23 @@ builds:
     goos:
       - darwin
       - linux
-      - windows
     goarch:
       - amd64
-    hooks:
-      post:
-        - upx --brute "{{ .Path }}"
+      - arm64
+    ignore:
+      - goos: linux
+        goarch: arm64
+    ldflags:
+      - -s -w -X github.com/iomarmochtar/cir-rotator/app/cmd.BuildHash={{.Commit}} -X github.com/iomarmochtar/cir-rotator/app/cmd.Version={{.Version}}
+    tags:
+      - static_build
 
 checksum:
   name_template: 'checksums.txt'
 
 archives:
-  - name_template: '{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}_{{ .Version }}'
+  - files:
+      # Only include built binary in archive
+      - 'none*'
     format: tar.gz
-    replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
-    format_overrides:
-      - goos: windows
-        format: zip
+    name_template: '{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}'

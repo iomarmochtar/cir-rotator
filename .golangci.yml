@@ -1,32 +1,65 @@
 run:
-  timeout: 3m
-
-linters-settings:
-  gocyclo:
-    min-complexity: 15
-  gocritic:
-    disabled-checks:
-      - ifElseChain
-
+  timeout: 10m
+    
 linters:
   enable:
-    - megacheck
-    - govet
-    - revive
-    - gocyclo
-    - gosec
-    - unconvert
-    - dupl
-    - nakedret
-    - prealloc
-    - exportloopref
+    - bodyclose
+    - copyloopvar
+    - dogsled
+    - errcheck
+    - exhaustive
+    - funlen
+    - goconst
     - gocritic
+    - gocyclo
+    - gofmt
     - goimports
-    - whitespace
-    - misspell
-    - depguard
-    - importas
-    - contextcheck
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - nakedret
+    - noctx
     - nolintlint
+    - prealloc
     - revive
+    - rowserrcheck
+    - staticcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - whitespace
 
+linters-settings:
+  funlen:
+    lines: 100
+    statements: 60
+  lll:
+    line-length: 200
+  gosec:
+    excludes:
+      - G101
+  revive:
+    rules:
+      - name: exported
+        disabled: true
+      - name: package-comments
+        disabled: true
+  stylecheck:
+    checks:
+      - all
+      - -ST1000
+
+
+issues:
+  exclude-use-default: false
+  exclude-rules:
+    - path: (.+)_test.go
+      linters:
+        - goconst
+        - lll
+        - funlen
+        - errcheck

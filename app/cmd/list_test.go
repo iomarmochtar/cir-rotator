@@ -10,7 +10,7 @@ import (
 func TestListAction(t *testing.T) {
 	listTestCases := h.CombineMaps(commonTestCases, map[string]caseParam{
 		"not providing any output": {
-			cmdArgs:        []string{"-ho", "asia.gcr.io"},
+			cmdArgs:        []string{"--host", "asia.gcr.io"},
 			expectedErrMsg: "must specified one or more output",
 		},
 	})
