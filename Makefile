@@ -1,28 +1,48 @@
-NAME           ?= "cir-rotator"
-LINTER_VERSION  = 1.46.0
-LINTER_BIN      = ./bin/golangci-lint
-COVERAGE_OUT    = coverage.txt
-
-.PHONY: setup-linter
-export LINTER_VERSION
-setup-linter:
-	test ! -f ${LINTER_BIN} && curl -sfL https://raw.githubusercontent.com/bukalapak/toolkit-installer/master/golangci-lint.sh | sh || true
-
-.PHONY: lint
-lint: setup-linter
-	${LINTER_BIN} run -v
+GO111MODULE = on
+CGO_ENABLED = 0
+GO_FILES = $(shell go list ./... | grep -v mocks)
 
 .PHONY: test
 test:
-	go test -v -cover -coverprofile=${COVERAGE_OUT} -covermode=atomic ./...
+	go test -v $(GO_FILES) -coverprofile=coverage.out
 
-.PHONY: coverage-html
-coverage-html: test
-	go tool cover -html=${COVERAGE_OUT}
+.PHONY: test-s
+test-s:
+	go test -v $(pkg)
+
+.PHONY: gen-mocks
+gen-mocks:
+	go generate $(GO_FILES)
+
+.PHONY: cleantestcache
+cleantestcache:
+	go clean -testcache
+
+.PHONY: tidy
+tidy:
+	GO111MODULE=$(GO111MODULE) go mod tidy
+
+.PHONY: cover
+cover: cleantestcache test
+	go tool cover -html=coverage.out -o coverage.html
+	go tool cover -func coverage.out
+
+.PHONY: cleanlintcache
+cleanlintcache:
+	golangci-lint cache clean
+
+.PHONY: lint
+lint: cleanlintcache
+	golangci-lint run --timeout 20m ./...
+
+.PHONY: dev-tools
+dev-tools:
+	go install go.uber.org/mock/mockgen@v0.5.0
+	./scripts/install_goreleaser.sh
 
 .PHONY: test-all
-test-all: test lint
+test-all: cover lint
 
-.PHONY: compile
-compile:
-	GOARCH=amd64 CGO_ENABLED=0 GOOS=linux go build -o dist/${NAME} main.go
+.PHONY: dist-dev
+dist-dev:
+	goreleaser build --snapshot --clean --single-target

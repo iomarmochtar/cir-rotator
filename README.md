@@ -2,23 +2,18 @@
 
 <p align="center">
     <p align="center"><strong>Container Image Registry Rotator</strong></p>
-    <p align="center">
-        <a href="https://goreportcard.com/report/github.com/iomarmochtar/cir-rotator"><img src="https://goreportcard.com/badge/github.com/iomarmochtar/cir-rotator" alt="Go Report Card"></a>
-        <a href="https://codecov.io/gh/iomarmochtar/cir-rotator" > 
-            <img src="https://codecov.io/gh/iomarmochtar/cir-rotator/branch/main/graph/badge.svg?token=MM0M02CDL1"/> 
-        </a>
 </p>
 
-Container image registry can be a collection of trash since it is mostly used for service deployment at the time that mostly later will be not used anymore and the total in terms of size will be increasing gradually. Turns out we pay something that we not used anymore
- 
-So this tools can help you create a rotation mechanism for it, by using the powerful include and exclude filters thanks to [antonmed’s expr](github.com/antonmedv/expr), also it becomes the key difference compared to other existing tools. This is the sample of the command with following criteria for deletion:
+Container image registry can be a collection of **trash** in the case of active app CI/CD deployment pipeline and for the old images are not cleaned up, the storage bills will grow gradually and you charged for something that you never use anymore
 
-- more than 6 months since it's uploaded with size more than 100 MiB
-- ignore any repo by name containing with `base-image` for latest tag
+So this tools can help you create a rotation mechanism for it, by using the powerful include and exclude filters thanks to [expr-lang](https://github.com/expr-lang/expr), also it becomes the key difference compared to other existing tools. This is the sample of the deletion execution by following criterias:
+
+- more than 6 months since it's uploaded with size more than 100 MiB.
+- ignore any repo by name containing with `base-image` for latest tag.
 - ignore any repo by name containing `internal-tool` for any tag.
 
 ```
-./cir-rotator delete --service-account sa.json -ho asia.gcr.io/parent-repo \
+./cir-rotator delete -ho asia-southeast2-docker.pkg.dev/gcp-proj/parent-repo \
                      --if "Now() - UploadedAt >= Duration('6M')  and ImageSize >= SizeStr('100 MiB')" \
                      --ef "Repository matches '.*base-image$' and 'latest' in Tags" \
                      --ef "Repository matches '.*internal-tools.*'"
@@ -50,11 +45,21 @@ The static binary file under [release page](https://github.com/iomarmochtar/cir-
 
 ## Provider/Type
 
+These are the supported Container Registry for now (PR are welcome). by default it will determining the type based on it's provided `host` argument.
+
 ### Google Container Image
 
-To make it minimal in granted roles for service accounts so i prevent using [list of repository catalog](https://docs.docker.com/registry/spec/api/#listing-repositories). As an alternative it will recursively fetch the repository list through any `child` from most top repository.
+Both GCP's **Container Image** and **Artifact Registry** are supported.
 
-The minimum role for execute the deletion in registry is `storage.admin` see the details in it's [documentation page](https://cloud.google.com/container-registry/docs/access-control#permissions_and_roles)
+#### Required Roles
+
+To make it minimal in roles that will be granted to the executor (eg: service account), the app will recursively fetch repository list through `child` from the top parent.
+
+So, minimum role is only `storage.admin` see the details in it's [documentation page](https://cloud.google.com/container-registry/docs/access-control#permissions_and_roles)
+
+#### Authentication
+
+If no authentication method provided then it will fallback to [Application Default Credential](https://cloud.google.com/docs/authentication/provide-credentials-adc), which means it also supports [Workload Identity](https://cloud.google.com/kubernetes-engine/docs/how-to/workload-identity) etc.
 
 ## Filters
 
@@ -62,7 +67,7 @@ Filter can be set more than one to make it more specific, it divided into 2 kind
 
 -  `include` filters will be executed first.
 - If it's provided more than one filter then it will be grouped with `OR` operation.
-- See `expr`'s [language definition](https://github.com/antonmedv/expr/blob/master/docs/Language-Definition.md) for available syntax.
+- See `expr`'s [language definition](https://expr-lang.org/docs/language-definition) for available syntax.
 
 There are also some custom function available:
 - `SizeStr(string): float64`, Convert the IEC size unit so it can be operated to `ImageSize` field eg: `SizeStr('10 MiB')`.
@@ -134,9 +139,3 @@ OPTIONS:
    --help, -h                          show help (default: false)
 ```
 </details>
-
-
-## TODO
-- [ ] Add registry type generic ([image registry spec](https://github.com/opencontainers/distribution-spec/blob/main/spec.md))
-- [ ] Add registry type ACR (Azure Container Registry)
-- [ ] Add retry mechanism in http client

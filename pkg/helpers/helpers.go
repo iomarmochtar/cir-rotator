@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -19,10 +20,11 @@ func IsInList[T comparable](needle T, haystack []T) bool {
 }
 
 func ReadLines(filePath string) ([]string, error) {
-	file, err := os.Open(filePath)
+	file, err := os.Open(filepath.Clean(filePath))
 	if err != nil {
 		return nil, err
 	}
+	//nolint:errcheck
 	defer file.Close()
 
 	scanner := bufio.NewScanner(file)

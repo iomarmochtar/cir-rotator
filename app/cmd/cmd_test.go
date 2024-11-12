@@ -2,9 +2,10 @@ package cmd_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -27,7 +28,8 @@ type caseParam struct {
 }
 
 func readFixture(fpath string) []byte {
-	data, err := ioutil.ReadFile(path.Join("..", "..", "testdata", fpath))
+	//nolint:gosec
+	data, err := os.ReadFile(path.Join("..", "..", "testdata", fpath))
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +40,7 @@ var (
 	commonTestCases = map[string]caseParam{
 		"basic auth authentication params not provided": {
 			cmdArgs:        []string{"-ho", "asia.gcr.io", "--output-table"},
-			expectedErrMsg: "you must set oauth token or basic auth params (username & password)",
+			expectedErrMsg: "google: could not find default credentials. See https://cloud.google.com/docs/authentication/external/set-up-adc for more information",
 		},
 		"successfully listing repository": {
 			cmdArgs: []string{"--output-table", "-u", "secret", "-p", "souce"},
@@ -99,18 +101,20 @@ func runCmdTestCases(name string, command *cli.Command, testCases map[string]cas
 				}))
 				// at moment for supporting gcr pattern
 				normHost := fmt.Sprintf("%s/repo", strings.Replace(ts.URL, "https://", "", 1))
-				tc.cmdArgs = append(tc.cmdArgs, "-ho", normHost, "--allow-insecure", "--type", "gcr")
+				tc.cmdArgs = append(tc.cmdArgs, "--host", normHost, "--allow-insecure", "--type", "gcr")
 
 				t.Cleanup(func() {
 					ts.Close()
 				})
 			}
-			set := flag.NewFlagSet("test", 0)
-			app := &cli.App{Writer: ioutil.Discard}
-			assert.NoError(t, set.Parse(append([]string{name}, tc.cmdArgs...)))
 
-			ctx := cli.NewContext(app, set, nil)
-			err := command.Run(ctx)
+			cmdArgs := append([]string{name}, tc.cmdArgs...)
+			set := flag.NewFlagSet("test", 0)
+			app := &cli.App{Writer: io.Discard}
+			assert.NoError(t, set.Parse(cmdArgs))
+
+			cCtx := cli.NewContext(app, set, &cli.Context{App: app})
+			err := command.Run(cCtx, cmdArgs...)
 
 			if tc.expectedErrMsg != "" {
 				assert.Error(t, err)
@@ -133,8 +137,14 @@ func TestNew(t *testing.T) {
 	app := cmd.New()
 	app.Writer = buf
 	err := app.Run([]string{"cir-rotator", "--version"})
-	output := buf.String()
 
+	obj := struct {
+		Version     string `json:"version"`
+		Commit      string `json:"commit"`
+		CompileTime string `json:"compile_time"`
+	}{}
 	assert.NoError(t, err)
-	assert.Equal(t, fmt.Sprintf("cir-rotator version %s\n", app.Version), output)
+	_ = json.Unmarshal(buf.Bytes(), &obj)
+	assert.Equal(t, cmd.Version, obj.Version)
+	assert.Equal(t, cmd.BuildHash, obj.Commit)
 }

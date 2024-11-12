@@ -18,6 +18,11 @@ func TestNew(t *testing.T) {
 	engine, err = fl.New([]string{`Repository matches '*secret-souce$'`})
 	assert.Error(t, err, "error in rules")
 	assert.Nil(t, engine)
+
+	// error compile rule
+	engine, err = fl.New([]string{`50 in ["halo"]`})
+	assert.Error(t, err, "cannot use int as type string in array (1:5)")
+	assert.Nil(t, engine)
 }
 
 func TestNew_Process(t *testing.T) {
@@ -36,10 +41,6 @@ func TestNew_Process(t *testing.T) {
 			filters:        []string{`"latest" in Tags`},
 			fields:         fl.Fields{Tags: []string{"latest", "release-abc"}},
 			expectedResult: true,
-		},
-		"error while processing filters": {
-			filters:        []string{`50 in ["halo"]`},
-			expectedErrMsg: "reflect.Value.MapIndex: value of type int is not assignable to type string (1:5)\n | (50 in [\"halo\"])\n | ....^",
 		},
 		"custom helper Date()": {
 			filters:        []string{"1 + 1 == 2 && CreatedAt >= Date('1991-06-13')"},
@@ -81,7 +82,7 @@ func TestNew_Process(t *testing.T) {
 		},
 		"wrong date pattern in Date()": {
 			filters:        []string{"Date('13-06-1991')"},
-			expectedErrMsg: "parsing time \"13-06-1991\" as \"2006-01-02\": cannot parse \"6-1991\" as \"2006\" (1:2)\n | (Date('13-06-1991'))\n | .^",
+			expectedErrMsg: "parsing time \"13-06-1991\" as \"2006-01-02\": cannot parse \"13-06-1991\" as \"2006\" (1:2)\n | (Date('13-06-1991'))\n | .^",
 			expectedResult: false,
 		},
 		"Operators": {

@@ -1,7 +1,7 @@
 package filter
 
 import (
-	"github.com/antonmedv/expr"
+	"github.com/expr-lang/expr"
 	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 )
 

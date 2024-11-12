@@ -3,6 +3,8 @@ package registry
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -141,10 +143,24 @@ func (g GCR) Delete(repository Repository) (err error) {
 	return nil
 }
 
-func gcrOauthSource(saData []byte) (oauth2.TokenSource, error) {
-	conf, err := google.JWTConfigFromJSON(saData, "https://www.googleapis.com/auth/devstorage.read_write")
+// gcrOauthSource generate token source from google library, supporting DAC (default application credential)
+func gcrOauthSource(saFilePath string) (oauth2.TokenSource, error) {
+	scope := "https://www.googleapis.com/auth/devstorage.read_write"
+	if saFilePath != "" {
+		saData, err := os.ReadFile(filepath.Clean(saFilePath))
+		if err != nil {
+			return nil, err
+		}
+		conf, err := google.JWTConfigFromJSON(saData, scope)
+		if err != nil {
+			return nil, err
+		}
+		return conf.TokenSource(context.Background()), nil
+	}
+
+	credentials, err := google.FindDefaultCredentials(context.Background(), scope)
 	if err != nil {
 		return nil, err
 	}
-	return conf.TokenSource(context.Background()), nil
+	return credentials.TokenSource, nil
 }

@@ -1,10 +1,10 @@
-FROM golang:1.18.3-alpine3.15 as builder
+FROM goreleaser/goreleaser:v2.3.2 AS builder
 WORKDIR /build
 COPY . .
-RUN apk --update add make && make compile 
+RUN goreleaser build --clean --single-target
 
-FROM alpine:3.15.4 
+FROM alpine:3.20.3
 RUN apk --no-cache add ca-certificates
-COPY --from=builder /build/dist/cir-rotator /usr/bin/cir-rotator
-ENTRYPOINT ["cir-rotator"]
+COPY --from=builder /build/dist/cir-rotator_linux_amd64_v1/cir-rotator /usr/bin/cir-rotator
+ENTRYPOINT ["gitlab-token-updater"]
 CMD ["--help"]

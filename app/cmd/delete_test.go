@@ -12,7 +12,7 @@ import (
 func TestDeleteAction(t *testing.T) {
 	deleteTestCases := h.CombineMaps(commonTestCases, map[string]caseParam{
 		"not providing any params": {
-			expectedErrMsg: `Required flag "ho" not set`,
+			expectedErrMsg: `Required flag "host" not set`,
 		},
 		"successfully deleting repositories": {
 			cmdArgs: []string{"-u", "secret", "-p", "souce"},

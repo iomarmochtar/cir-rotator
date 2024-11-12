@@ -9,12 +9,9 @@ import (
 	c "github.com/iomarmochtar/cir-rotator/app/config"
 	fl "github.com/iomarmochtar/cir-rotator/pkg/filter"
 	"github.com/iomarmochtar/cir-rotator/pkg/helpers"
-	h "github.com/iomarmochtar/cir-rotator/pkg/helpers"
 	reg "github.com/iomarmochtar/cir-rotator/pkg/registry"
 	"github.com/rs/zerolog/log"
 )
-
-const VERSION = "0.2.0"
 
 type App struct {
 	config c.IConfig
@@ -154,7 +151,7 @@ func filterRepositoryDigestBySkipList(repo *reg.Repository, skipList []string) {
 		digest := repo.Digests[idd]
 		for idt := range digest.Tag {
 			imageName := fmt.Sprintf("%s:%s", repo.Name, digest.Tag[idt])
-			if h.IsInList(imageName, skipList) {
+			if helpers.IsInList(imageName, skipList) {
 				includeDigest = false
 				log.Info().Str("image", imageName).Str("digest", digest.Name).Msg("listed in skip list, ignoring related digest")
 				break
